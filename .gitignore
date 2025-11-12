@@ -1,0 +1,62 @@
+# -------------------------
+# 📦 Dependencies
+# -------------------------
+frontend/node_modules/
+backend/node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# -------------------------
+# 🧪 Testing
+# -------------------------
+frontend/coverage/
+backend/coverage/
+
+# -------------------------
+# ⚙️ Next.js & Build outputs
+# -------------------------
+frontend/.next/
+frontend/out/
+frontend/build/
+
+# -------------------------
+# 🧰 Misc
+# -------------------------
+.DS_Store
+*.pem
+
+# -------------------------
+# 🐞 Debug logs
+# -------------------------
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+backend/npm-debug.log*
+backend/yarn-debug.log*
+backend/yarn-error.log*
+.pnpm-debug.log*
+
+# -------------------------
+# 🔐 Environment files
+# -------------------------
+.env
+.env.*
+!frontend/.env.example
+!backend/.env.example
+
+# -------------------------
+# 🌐 Deployment (Vercel)
+# -------------------------
+frontend/.vercel/
+
+# -------------------------
+# 💡 TypeScript
+# -------------------------
+frontend/*.tsbuildinfo
+backend/*.tsbuildinfo
+frontend/next-env.d.ts
