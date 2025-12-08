@@ -1,9 +1,6 @@
 import { Router } from "express";
+import { healthCheck } from "../controllers/controller";
 
 const appRouter = Router();
 
-appRouter.get("/root", (_, res) => {
-    res.json({
-        message : "Chat application"
-    })
-})
+appRouter.get("/health", healthCheck);

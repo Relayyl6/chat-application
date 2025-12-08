@@ -18,8 +18,8 @@ const NavBar = () => {
     ]
 
   return (
-    <main className='absolute top-1 z-50 w-full h-fit backdrop-blur-xl bg-black/50'>
-        <div className='flex flex-row justify-between'>
+    <main className='sticky top-0 z-50 w-full backdrop-blur-xl bg-black/50'>
+        <nav className='flex flex-row justify-between h-12 items-center'>
             {/* // ONE WINDOW */}
             <div className='flex flex-row gap-2 px-1 py-1 h-fit'>
                 <h3 className='color-white bg-blue-500 px-2 py-1 font-semibold text-xl rounded-lg'>We Chat</h3>
@@ -30,12 +30,12 @@ const NavBar = () => {
 
             <div className="flex items-center justify-center px-2">
                 {items.map(({id, title}) => (
-                    <div key={id} className='hover:bg-gray-500 p-2 last:hover:bg-red-700 cursor-pointer'>
+                    <div key={id} className='hover:bg-gray-500 p-1 m-1 last:hover:bg-red-700 cursor-pointer rounded-lg duration-200 ease-in-out'>
                         {title}
                     </div>
                 ))}
             </div>
-        </div>
+        </nav>
     </main>
   )
 }

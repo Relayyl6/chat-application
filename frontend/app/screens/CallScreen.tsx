@@ -1,12 +1,9 @@
-import ChatPreview from "@/components/ChatPreview"
-import MainChat from "@/components/MainChat"
+import React from 'react'
 
-export default function ChatScreen() {
-
+const CallScreen = () => {
   return (
-    <main className="flex flex-row bg-gray-700 w-full">
-      <ChatPreview />
-      <MainChat />
-    </main>
+    <div>CallScreen</div>
   )
 }
+
+export default CallScreen

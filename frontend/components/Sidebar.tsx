@@ -1,5 +1,7 @@
 "use client"
 
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import React, { useState } from 'react'
 
 interface HamburgerProps {
@@ -65,17 +67,31 @@ export const AnimatedHamburgerMenu = ({
 };
 
 const Sidebar = () => {
-    const [ toggle, setToggle ] = useState<boolean>(false);
-    const TopItem = [
-        {id: 1, title: "Ch", expandedTitle: "Chats"},
-        {id: 2, title: "St", expandedTitle: "Status"},
-        {id: 3, title: "Ca", expandedTitle: "Calls"}
+    interface Item {
+      id: number,
+      title: string,
+      expandedTitle: string,
+      ref: string
+    }
+    const [ toggle, setToggle ] = useState<boolean>(true);
+    const TopItem: Item[] = [
+        {id: 1, title: "Ch", expandedTitle: "Chats", ref: "chat"},
+        {id: 2, title: "St", expandedTitle: "Status", ref: "status"},
+        {id: 3, title: "Ca", expandedTitle: "Calls", ref: "calls"}
     ]
+    const BottomItem: Item[] = [
+        {id: 1, title: "Sm", expandedTitle: "Starred messages", ref: "Starred"},
+        {id: 2, title: "Ac", expandedTitle: "Archived chats", ref: "Archived"},
+        {id: 3, title: "Se", expandedTitle: "settings", ref: "settings"},
+        {id: 4, title: "Pr", expandedTitle: "Proiles", ref: "Proiles"}
+    ]
+    const pathname = usePathname();
+    const last = pathname.split('/').pop();
 
   return (
-    <main className={`${toggle ? "w-[60px]" : "w-[200px]"} duration-500 ease-in-out h-screen md:h-[95dvh] z-30 backdrop-blur-xl left-0 top-11 bg-black px-1 relative`}>
+    <main className={`${toggle ? "w-[60px]" : "w-[200px]"} duration-500 ease-in-out z-30 backdrop-blur-xl bg-black px-1 relative`}>
       <div className='flex flex-col z-40 justify-between px-1 mt-3 gap-2'>
-          <button className='hover:bg-gray-500 w-10 rounded-lg p-2 text-white flex items-center justify-center' onClick={() => setToggle(!toggle)}>
+          <button className='hover:bg-gray-500 w-10 rounded-lg p-2 text-white flex items-center justify-center mb-2' onClick={() => setToggle(!toggle)}>
               <AnimatedHamburgerMenu
                   isOpen={!toggle}
                   size={18}
@@ -83,19 +99,20 @@ const Sidebar = () => {
               />
           </button>
           <div className='flex flex-col relative'>
-              {TopItem.map(({id, title, expandedTitle}) => (
-                  <div key={id} className='hover:bg-gray-500 p-2 relative rounded-sm mb-2 cursor-pointer'>
+              {TopItem.map(({id, title, expandedTitle, ref}) => (
+                  <Link key={id} href={ref} className={`${last === ref ? "bg-gray-500 text-black" : ""} p-2 relative rounded-sm mb-2 cursor-pointer`}>
                       <div className='absolute bg-blue-800 h-4 rounded-lg w-0.5 flex top-1/2 -translate-y-1/2 left-0' />
                       <div className='flex flex-row gap-3'>
-                        <span className="bg-violet-700 w-8">
+                        <span className="bg-violet-700 w-8 text-white dark:text-black">
                           {title}
                         </span>
-                        {!toggle && 
-                          <span>
+                        {!toggle &&
+                          <span className="text-white dark:text-black">
                             {expandedTitle}
-                          </span>}
+                          </span>
+                        }
                       </div>
-                  </div>
+                  </Link>
               ))}
               <div className='bg-gray-500 h-px w-full' />
               <div className='flex flex-row relative gap-3 py-2 hover:bg-gray-500 mt-2 rounded-xl items-center justify-center'>
@@ -106,20 +123,20 @@ const Sidebar = () => {
 
         <div className='absolute bottom-3'>
           <div className="flex flex-col">
-            {TopItem.map(({id, title, expandedTitle}) => (
-                      <div key={id} className='hover:bg-gray-500 p-2 relative rounded-sm mb-2 cursor-pointer'>
-                          <div className='absolute bg-blue-800 h-4 rounded-lg w-0.5 flex top-1/2 -translate-y-1/2 left-0' />
-                          <div className='flex flex-row gap-3'>
-                            <span className="bg-violet-700 w-8">
-                              {title}
-                            </span>
-                            {!toggle && 
-                              <span>
-                                {expandedTitle}
-                              </span>}
-                          </div>
-                      </div>
-                  ))}
+            {BottomItem.map(({id, title, expandedTitle}) => (
+              <div key={id} className='hover:bg-gray-500 p-2 relative rounded-sm mb-2 cursor-pointer even:border-b even:border-white'>
+                  <div className='absolute bg-blue-800 h-4 rounded-lg w-0.5 flex top-1/2 -translate-y-1/2 left-0' />
+                  <div className='flex flex-row gap-3'>
+                    <span className="bg-violet-700 w-8">
+                      {title}
+                    </span>
+                    {!toggle && 
+                      <span>
+                        {expandedTitle}
+                      </span>}
+                  </div>
+              </div>
+            ))}
           </div>
         </div>
     </main>

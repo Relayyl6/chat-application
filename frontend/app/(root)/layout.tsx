@@ -4,11 +4,13 @@ import NavBar from '@/components/NavBar'
 
 export default function Layout({children}: Readonly<{ children: React.ReactNode }>) { 
     return (
-        <main className='backdrop-blur-xl relative h-screen w-screen overflow-hidden'>
+        <main className='backdrop-blur-xl flex flex-col relative'>
             <NavBar />
             <div className='flex flex-row'>
                 <Sidebar />
-                {children}
+                <section className="flex flex-1">
+                  {children}   {/* ← THIS AREA CHANGES BASED ON PAGE */}
+                </section>
             </div>
         </main>
     )
