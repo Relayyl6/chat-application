@@ -18,13 +18,13 @@ const NavBar = () => {
     ]
 
   return (
-    <main className='sticky top-0 z-50 w-full backdrop-blur-xl bg-black/50'>
-        <nav className='flex flex-row justify-between h-12 items-center'>
+    <main className='shrink-0 w-full backdrop-blur-xl bg-black/50'>
+        <nav className='flex flex-row justify-between h-12 items-center px-2'>
             {/* // ONE WINDOW */}
-            <div className='flex flex-row gap-2 px-1 py-1 h-fit'>
+            <div className='flex flex-row gap-2 h-fit'>
                 <h3 className='color-white bg-blue-500 px-2 py-1 font-semibold text-xl rounded-lg'>We Chat</h3>
                 <div className='px-2 py-1 cursor-pointer hover:bg-gray-500 flex items-center justify-center rounded-lg   duration-300 ease-in-out'>
-                    <h3 className='font-semibold text-white text-[14px] text-center flex justify-center'>{connectionState}</h3>
+                    <h3 className='font-semibold text-white text-sm text-center flex justify-center'>{connectionState}</h3>
                 </div>
             </div>
 

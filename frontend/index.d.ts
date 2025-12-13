@@ -19,14 +19,14 @@ declare interface Item {
 }
 
 declare interface MessageContainerProp {
-  id?: string,
+  id?: number,
   title: string,
   firstLine: string,
   message: MessageProps[]
 }
 
 declare interface MessageProps {
-  alais?: user,
+  alias?: user,
   timestamp: string,
   text: string | undefined
 }
