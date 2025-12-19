@@ -35,7 +35,6 @@ const ChatPreview = () => {
               <div className='flex flex-row justify-between box-border m-1 bg-white' key={person.id}>
                   <ChatCard
                     name={person.title}
-                    firstLine={person.firstLine}
                     date={todayDate}
                     id={person.id}
                   />

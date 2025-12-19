@@ -6,19 +6,14 @@ import ChatHeader from '@/components/ChatHeader'
 import ChatBubble from '@/components/ChatBubble'
 import InputSection from '@/components/InputSection'
 import { useParams } from 'next/navigation'
+import { useAppContext } from '@/context/useContext'
 
 
 const Page = () => {
     // const { id } = await params; // how to do it in a server component with props { params }: Props
     const params = useParams();
     const chatId = params.id as string
-    const [messagesByChat, setMessagesByChat] = useState<
-      Record<string, MessageProps[]>
-    >(() => {
-      if (typeof window === "undefined") return {}
-      const stored = localStorage.getItem("messagesByChat")
-      return stored ? JSON.parse(stored) : {}
-    });
+    const { messagesByChat, setMessagesByChat } = useAppContext();
     const bottomRef = useRef<HTMLDivElement | null>(null)
 
     useEffect(() => {
@@ -33,10 +28,7 @@ const Page = () => {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" })
     }, [messages])
 
-
-
     const person = people.find(p => p.id === parseInt(chatId)) as Item
-
 
     // Handle case where person is not found
     if (!person) {
