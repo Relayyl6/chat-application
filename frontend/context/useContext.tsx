@@ -6,6 +6,8 @@ import React, { createContext, useState, useContext, useEffect } from 'react'
 interface AppContextType {
   messagesByChat: Record<string, MessageProps[]>;
   setMessagesByChat: React.Dispatch<React.SetStateAction<Record<string, MessageProps[]>>>;
+  aiChatMessage: boolean;
+  setAiChatMessage: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
 }
 
 // Create context with undefined as default
@@ -39,10 +41,14 @@ export const ContextProvider = ({
       }
     }, [messagesByChat]);
 
+    const [ aiChatMessage, setAiChatMessage ] = useState<boolean>(false); // would eventualy be in the contextapi to indicate whether its an AI chat
+
     return (
       <AppContext.Provider value={{
           messagesByChat,
-          setMessagesByChat
+          setMessagesByChat,
+          aiChatMessage,
+          setAiChatMessage
       }}>
           {children}
       </AppContext.Provider>

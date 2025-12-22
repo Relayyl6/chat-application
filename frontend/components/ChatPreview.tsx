@@ -31,15 +31,17 @@ const ChatPreview = () => {
       <div className='mt-2 flex-1 min-h-0 h-full'>
         <div className='mt-2 bg-green-800 flex flex-col w-full h-full overflow-y-auto no-scrollbar'>
           {
-            people.map((person: {id: number, title: string, firstLine: string}) => (
-              <div className='flex flex-row justify-between box-border m-1 bg-white' key={person.id}>
+            people.map((person: {id: number, title: string, firstLine: string}) => {
+              return (
+                <div className='flex flex-row justify-between box-border m-1 bg-white' key={person.id}>
                   <ChatCard
                     name={person.title}
                     date={todayDate}
                     id={person.id}
                   />
-              </div>
-            ))
+                </div>
+              )
+            })
           }
         </div>
       </div>

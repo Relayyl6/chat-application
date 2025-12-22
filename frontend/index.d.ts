@@ -31,4 +31,9 @@ declare interface MessageProps {
   text: string | undefined
 }
 
-type user = "me" | "you";
+declare type user = "me" | "you" | "ai";
+
+
+declare interface GenerateResponse {
+  result: string;
+}

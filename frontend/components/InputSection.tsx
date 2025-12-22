@@ -1,6 +1,8 @@
 "use client"
 
 import React, { ChangeEvent, Dispatch, SetStateAction, useEffect, useState } from 'react'
+import apiHandling from './apiHandling';
+import { useAppContext } from '@/context/useContext';
 
 interface Props {
   message: MessageProps[],
@@ -9,20 +11,79 @@ interface Props {
 
 const InputSection = ({ message, setMessage }: Props) => {
   const [ text, setText ] = useState<string | undefined>("");
+  const [ isLoading, setIsLoading ] = useState<boolean>(false);
+  const [ error, setError ] = useState("");
+  const { aiChatMessage } = useAppContext();
 
-  const addItem = () => {
-    const newItem: MessageProps = {
+  const addItem = async () => {
+    const userMessage: MessageProps = {
       alias: "me",
       timestamp: new Date().toLocaleTimeString(),
       text: text
     }
-    setMessage(prev => [...prev, newItem]);
-    setText("")
+    setMessage(prev => [...prev, userMessage]);
+    setIsLoading(true)
+    try {
+      let aiMessage: MessageProps;
+      let chatResponse: MessageProps;
+
+      if (aiChatMessage) {
+        const response = await apiHandling<GenerateResponse>('/generate', 'POST', {
+          message : text,
+        }); // when talkign to ai
+
+        aiMessage = {
+          alias : 'ai',
+          text : response.result,
+          timestamp : new Date().toLocaleDateString()
+        };
+
+        setMessage(prev => [...prev, aiMessage]);
+      } else {
+        const response = await apiHandling<GenerateResponse>('/generate', 'POST', {
+          message : text,
+        }); // when talkign to ai
+
+        chatResponse = {
+          alias : 'you',
+          text : response.result,
+          timestamp : new Date().toLocaleDateString()
+        };
+
+        setMessage(prev => [...prev, chatResponse]);
+      }
+
+      
+      // setInputText('')
+
+      setText("")
+      setIsLoading(false);
+    } catch (error: unknown) {
+      console.error('An error occurred:', error);
+
+      let message = 'An unexpected error occurred';
+
+      if (error instanceof Error) {
+        message = error.message;
+      }
+    
+      const errorMessage: MessageProps = {
+        alias: 'you',
+        text: `Error: ${message}`,
+        timestamp: new Date().toLocaleTimeString(),
+      };
+    
+      setMessage(prev => [...prev, errorMessage]);
+      setError(`Error: ${message}`);
+    } finally {
+      setIsLoading(false)
+      setText('');
+    }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
   if (e.key === 'Enter') {
-    // Call your send message function here
+    // Call the send message function here
     // handleSendMessage(); // for when teh backend is done
     addItem()
   }
@@ -40,7 +101,15 @@ const InputSection = ({ message, setMessage }: Props) => {
           onKeyDown={handleKeyDown}
       />
       <button onClick={addItem} className="bg-violet-600 px-3 rounded-lg hover:brightness-75 focus:bg-black">
-        <p>Send</p>
+        <p>
+          {!isLoading ?
+            "Send": (
+              <div className="flex justify-center">
+                <div className="animate-spin h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+              </div>
+            )
+          }
+        </p>
       </button>
     </div>
   )

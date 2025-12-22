@@ -40,8 +40,15 @@ const Page = () => {
     }
     const { id: userId, title, firstLine } = person!;
 
+    const aliasBgMap: Record<user, string> = {
+      you: 'bg-green-500',
+      ai: 'bg-purple-500',
+      me: 'bg-white',
+    };
+
+
   return (
-    <div className="flex flex-col p-2 gap-2 w-full h-full">
+    <div className="flex flex-col p-2 gap-2 w-full h-full max-md:hidden">
       <ChatHeader
         title={title}
         subTitle={firstLine}
@@ -53,8 +60,8 @@ const Page = () => {
             <div className="overflow-y-auto no-scrollbar gap-2 flex-1 px-2">
               {messages?.map(
               (t: MessageProps) => (
-                  <div key={t.timestamp} className={`flex w-full px-2 justify-center mb-1 ${t.alias === "me" ? "justify-start" : "justify-end"}`}>
-                    <ChatBubble message={t?.text} className={`${t.alias === "you" ? " bg-green-500!" : ""}`} />
+                  <div key={t.timestamp} className={`flex w-full px-2 mb-1 ${t.alias === "me" ? "justify-start" : "justify-end"}`}>
+                    <ChatBubble message={t?.text} timestamp={t?.timestamp} className={`${aliasBgMap[t.alias as user] ?? 'bg-white'}`} />
                   </div>
               ))}
               <div ref={bottomRef} />
