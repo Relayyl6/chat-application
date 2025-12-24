@@ -1,18 +1,18 @@
 import Image from 'next/image'
+import Link from 'next/link'
 import React from 'react'
 
 const Buttons = ({ icon, path }: { icon: string }) => {
-    const navigate = useNavigate
+    // const navigate = useNavigate
     const handleClick = () => {
-
     }
   return (
-    <div className='flex size'>
-        <Link href={``}>
+    <div className='flex size-full'>
+        <button onClick={handlerClick}>
             <Image
-
+        
             />
-        </Link>
+        </button>
     </div>
   )
 }

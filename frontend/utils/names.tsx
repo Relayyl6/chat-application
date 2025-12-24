@@ -1,4 +1,4 @@
-export const people = [
+export const initialPeople = [
   { id: 1, title: "Leonard Oseghale", firstLine:"you can absolutely constrain content layouts per route to account for sidebar/navbar dimensionscan absolutely constrain content layouts per route to account for sidebar/navbar dimensions"},
   { id: 2, title: "Sarah Thompson", firstLine:"you can absolutely constrain content layouts"},
   { id: 3, title: "Michael Harrington", firstLine:"you can absolutely constrain content layouts per route to account for sidebar/navbar dimensions" },

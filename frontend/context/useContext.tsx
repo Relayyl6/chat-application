@@ -1,5 +1,6 @@
 "use client"
 
+import { initialPeople } from '@/utils/names';
 import React, { createContext, useState, useContext, useEffect } from 'react'
 
 // Define the shape of your context
@@ -7,7 +8,9 @@ interface AppContextType {
   messagesByChat: Record<string, MessageProps[]>;
   setMessagesByChat: React.Dispatch<React.SetStateAction<Record<string, MessageProps[]>>>;
   aiChatMessage: boolean;
-  setAiChatMessage: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  setAiChatMessage: React.Dispatch<React.SetStateAction<boolean>>;
+  people: MessageContainerProp[];
+  setPeople: React.Dispatch<React.SetStateAction<MessageContainerProp[]>>;
 }
 
 // Create context with undefined as default
@@ -42,13 +45,19 @@ export const ContextProvider = ({
     }, [messagesByChat]);
 
     const [ aiChatMessage, setAiChatMessage ] = useState<boolean>(false); // would eventualy be in the contextapi to indicate whether its an AI chat
+    const [people, setPeople] = useState<MessageContainerProp[]>(() => {
+      const saved = localStorage.getItem("people");
+      return saved ? JSON.parse(saved) : initialPeople;
+    });
 
     return (
       <AppContext.Provider value={{
           messagesByChat,
           setMessagesByChat,
           aiChatMessage,
-          setAiChatMessage
+          setAiChatMessage,
+          people,
+          setPeople
       }}>
           {children}
       </AppContext.Provider>

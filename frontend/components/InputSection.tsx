@@ -6,14 +6,35 @@ import { useAppContext } from '@/context/useContext';
 
 interface Props {
   message: MessageProps[],
-  setMessage: Dispatch<SetStateAction<MessageProps[]>>
+  setMessage: Dispatch<SetStateAction<MessageProps[]>>,
+  activePersonId: number
 }
 
-const InputSection = ({ message, setMessage }: Props) => {
+const InputSection = ({
+  message,
+  setMessage,
+  activePersonId
+ }: Props) => {
   const [ text, setText ] = useState<string | undefined>("");
   const [ isLoading, setIsLoading ] = useState<boolean>(false);
   const [ error, setError ] = useState("");
-  const { aiChatMessage } = useAppContext();
+  const { aiChatMessage, setPeople } = useAppContext();
+  const onNewMessage = (personId: number, text: string) => {
+  setPeople(prev => {
+    const updated = prev.map(p =>
+      p.id === personId
+        ? { ...p, firstLine: text }
+        : p
+    );
+
+    const active = updated.find(p => p.id === personId)!;
+    const others = updated.filter(p => p.id !== personId);
+
+    const reordered = [active, ...others];
+
+    localStorage.setItem("people", JSON.stringify(reordered));
+    return reordered;
+  })};
 
   const addItem = async () => {
     const userMessage: MessageProps = {
@@ -22,6 +43,7 @@ const InputSection = ({ message, setMessage }: Props) => {
       text: text
     }
     setMessage(prev => [...prev, userMessage]);
+    onNewMessage(activePersonId, text as string);
     setIsLoading(true)
     try {
       let aiMessage: MessageProps;
@@ -82,12 +104,12 @@ const InputSection = ({ message, setMessage }: Props) => {
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-  if (e.key === 'Enter') {
-    // Call the send message function here
-    // handleSendMessage(); // for when teh backend is done
-    addItem()
+    if (e.key === 'Enter') {
+      // Call the send message function here
+      // handleSendMessage(); // for when teh backend is done
+      addItem()
+    }
   }
-}
 
   return (
     <div className='sticky bottom-0 w-full p-2 flex flex-row bg-green-400 gap-2 rounded-br-xl'>
@@ -101,7 +123,7 @@ const InputSection = ({ message, setMessage }: Props) => {
           onKeyDown={handleKeyDown}
       />
       <button onClick={addItem} className="bg-violet-600 px-3 rounded-lg hover:brightness-75 focus:bg-black">
-        <p>
+        <div>
           {!isLoading ?
             "Send": (
               <div className="flex justify-center">
@@ -109,7 +131,7 @@ const InputSection = ({ message, setMessage }: Props) => {
               </div>
             )
           }
-        </p>
+        </div>
       </button>
     </div>
   )

@@ -2,13 +2,15 @@
 
 import { useState } from 'react'
 import Header from './Header';
-import Chats from './Chats';
-import { people } from '@/utils/names'
+// import Chats from './Chats';
+// import { people } from '@/utils/names'
 import ChatCard from './ChatCard'
+import { useAppContext } from '@/context/useContext';
 
 const ChatPreview = () => {
 
     // const chatHistory = [];
+    const { people } = useAppContext();
 
     const [ something, setSomething ] = useState(true);
     const [ another, setAnother ] = useState(true);

@@ -1,7 +1,7 @@
 "use client"
 
-import React, { useEffect, useState, useRef, useMemo } from 'react'
-import { people } from '@/utils/names'
+import React, { useEffect, useRef, useMemo } from 'react'
+// import { people } from '@/utils/names'
 import ChatHeader from '@/components/ChatHeader'
 import ChatBubble from '@/components/ChatBubble'
 import InputSection from '@/components/InputSection'
@@ -13,7 +13,7 @@ const Page = () => {
     // const { id } = await params; // how to do it in a server component with props { params }: Props
     const params = useParams();
     const chatId = params.id as string
-    const { messagesByChat, setMessagesByChat } = useAppContext();
+    const { messagesByChat, setMessagesByChat, people } = useAppContext();
     const bottomRef = useRef<HTMLDivElement | null>(null)
 
     useEffect(() => {
@@ -28,7 +28,7 @@ const Page = () => {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" })
     }, [messages])
 
-    const person = people.find(p => p.id === parseInt(chatId)) as Item
+    const person = people.find(p => p.id === parseInt(chatId)) as Item;
 
     // Handle case where person is not found
     if (!person) {
@@ -68,7 +68,7 @@ const Page = () => {
             </div>
             <InputSection
               message={messages}
-              setMessage={(updater) =>
+              setMessage={(updater: unknown) =>
                 setMessagesByChat(prev => {
                   const current = prev[chatId] ?? []
                   const nextMessages =
@@ -81,6 +81,7 @@ const Page = () => {
                   }
                 })
               }
+              activePersonId={parseInt(chatId)}
             />
           </div>
         )}
