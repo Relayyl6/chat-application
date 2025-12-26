@@ -46,7 +46,7 @@ const Page = () => {
       me: 'bg-white',
     };
 
-
+    console.log(aliasBgMap["you" as user])
   return (
     <div className="flex flex-col p-2 gap-2 w-full h-full max-md:hidden">
       <ChatHeader

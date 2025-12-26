@@ -4,7 +4,7 @@ import NavBar from '@/components/NavBar'
 
 export default function Layout({children}: Readonly<{ children: React.ReactNode }>) { 
     return (
-        <main className='backdrop-blur-xl flex flex-col relative h-screen and overflow-hidden'>
+        <main className='backdrop-blur-xl flex flex-col relative h-screen overflow-hidden'>
             <NavBar />
             <div className='flex flex-row flex-1 min-h-0'>
                 <Sidebar />

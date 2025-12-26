@@ -21,7 +21,7 @@ const ChatPreview = () => {
     const todayDate = new Date().toISOString();
 
   return (
-    <main className='flex flex-col w-[350px] min-w-[300px] sm:w-[400px] sm:min-w-[350px] max-w-sm bg-gray-800 p-3 rounded-tl-xl'>
+    <main className='flex flex-col w-[350px] min-w-[300px] sm:w-[400px] sm:min-w-[350px] max-w-sm max-md:rounded-r-lg bg-gray-800 p-3 rounded-tl-xl'>
       <Header
         text="Chat"
         onClick={() => setAnother(!something)}
@@ -33,13 +33,13 @@ const ChatPreview = () => {
       <div className='mt-2 flex-1 min-h-0 h-full'>
         <div className='mt-2 bg-green-800 flex flex-col w-full h-full overflow-y-auto no-scrollbar'>
           {
-            people.map((person: {id: number, title: string, firstLine: string}) => {
+            people.map(({ title, id }) => {
               return (
-                <div className='flex flex-row justify-between box-border m-1 bg-white' key={person.id}>
+                <div className='flex flex-row justify-between box-border m-1 bg-white' key={id}>
                   <ChatCard
-                    name={person.title}
+                    name={title}
                     date={todayDate}
-                    id={person.id}
+                    id={id}
                   />
                 </div>
               )
