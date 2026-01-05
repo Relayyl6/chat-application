@@ -1,40 +1,33 @@
 "use client"
 
-import React, { ChangeEvent, Dispatch, SetStateAction, useEffect, useState } from 'react'
+import React, { ChangeEvent, Dispatch, SetStateAction, useState } from 'react'
 import apiHandling from './apiHandling';
 import { useAppContext } from '@/context/useContext';
-
-interface Props {
-  message: MessageProps[],
-  setMessage: Dispatch<SetStateAction<MessageProps[]>>,
-  activePersonId: number
-}
 
 const InputSection = ({
   message,
   setMessage,
   activePersonId
- }: Props) => {
+ }: InputProps) => {
   const [ text, setText ] = useState<string | undefined>("");
   const [ isLoading, setIsLoading ] = useState<boolean>(false);
   const [ error, setError ] = useState("");
   const { aiChatMessage, setPeople } = useAppContext();
-  const onNewMessage = (personId: number, text: string) => {
-  setPeople(prev => {
-    const updated = prev.map(p =>
-      p.id === personId
-        ? { ...p, firstLine: text }
-        : p
-    );
-
-    const active = updated.find(p => p.id === personId)!;
-    const others = updated.filter(p => p.id !== personId);
-
-    const reordered = [active, ...others];
-
-    localStorage.setItem("people", JSON.stringify(reordered));
-    return reordered;
-  })};
+  const onNewMessage = (personId: string, text: string) => {
+    setPeople(prev => ({
+      byId: {
+        ...prev.byId,
+        [personId]: {
+          ...prev.byId[personId],
+          firstLine: text
+        }
+      },
+      order: [
+        personId,
+        ...prev.order.filter(id => id !== personId)
+      ]
+    }))
+  }
 
   const addItem = async () => {
     const userMessage: MessageProps = {
@@ -42,9 +35,10 @@ const InputSection = ({
       timestamp: new Date().toLocaleTimeString(),
       text: text
     }
-    setMessage(prev => [...prev, userMessage]);
+    setMessage((prev: MessageProps[]) => [...prev, userMessage]);
+    console.log(message);
     onNewMessage(activePersonId, text as string);
-    setIsLoading(true)
+    setIsLoading(true) 
     try {
       let aiMessage: MessageProps;
       let chatResponse: MessageProps;
@@ -60,7 +54,7 @@ const InputSection = ({
           timestamp : new Date().toLocaleDateString()
         };
 
-        setMessage(prev => [...prev, aiMessage]);
+        setMessage((prev: MessageProps[]) => [...prev, aiMessage]);
       } else {
         const response = await apiHandling<GenerateResponse>('/generate', 'POST', {
           message : text,
@@ -72,7 +66,7 @@ const InputSection = ({
           timestamp : new Date().toLocaleDateString()
         };
 
-        setMessage(prev => [...prev, chatResponse]);
+        setMessage((prev: MessageProps[]) => [...prev, chatResponse]);
       }
 
       
@@ -95,11 +89,12 @@ const InputSection = ({
         timestamp: new Date().toLocaleTimeString(),
       };
     
-      setMessage(prev => [...prev, errorMessage]);
+      setMessage((prev: MessageProps[]) => [...prev, errorMessage]);
       setError(`Error: ${message}`);
     } finally {
       setIsLoading(false)
       setText('');
+      setError("")
     }
   }
 

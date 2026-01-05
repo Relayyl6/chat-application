@@ -12,7 +12,7 @@ const page = () => {
           <div className='flex flex-row justify-between w-full m-2 px-2 bg-white' key={person.id}>
             <ChatCard
               name={person.title}
-              firstLine={person.firstLine}
+              id={person.id}
               date={todayDate}
             />
           </div>

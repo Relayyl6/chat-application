@@ -19,10 +19,10 @@ declare interface Item {
 }
 
 declare interface MessageContainerProp {
-  id?: number,
+  id?: string,
   title: string,
   firstLine: string,
-  message: MessageProps[]
+  message?: MessageProps[] | []
 }
 
 declare interface MessageProps {
@@ -36,4 +36,33 @@ declare type user = "me" | "you" | "ai";
 
 declare interface GenerateResponse {
   result: string;
+}
+
+declare interface InputProps {
+  message: MessageProps[],
+  setMessage: Dispatch<SetStateAction<MessageProps[]>>,
+  activePersonId: number
+}
+
+declare interface HeaderProps {
+  text: string,
+  onClick: () => void,
+  onPress: () => void,
+  searchValue: string,
+  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  something: boolean,
+  title: string,
+  firstLine: string,
+  setName: React.Dispatch<React.SetStateAction<string>>
+  setFirstLine: React.Dispatch<React.SetStateAction<string>>
+}
+
+declare // Define the shape of your context
+interface AppContextType {
+  messagesByChat: Record<string, MessageProps[]>;
+  setMessagesByChat: React.Dispatch<React.SetStateAction<Record<string, MessageProps[]>>>;
+  aiChatMessage: boolean;
+  setAiChatMessage: React.Dispatch<React.SetStateAction<boolean>>;
+  people: MessageContainerProp[];
+  setPeople: React.Dispatch<React.SetStateAction<MessageContainerProp[]>>;
 }

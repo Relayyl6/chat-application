@@ -26,15 +26,13 @@ const ChatHeader = ({
         </div>
 
         <div className='md:flex flex-row gap-1 hidden'>
-            {
-                id && (
+            {id && (
                 <div className="flex border border-black relative">
                     <p className='bg-gray-800 py-2 px-3 hover:bg-gray-600 rounded-l-md'>X</p>
                     <div className='w-px h-8/12 absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 bg-white' />
                     <p className='bg-gray-800 py-2 px-3 hover:bg-gray-600 rounded-r-md'>X</p>
                 </div>
-            )
-            }
+            )}
             <p className=' hover:bg-gray-600 py-2 px-3 flex justify-center items-center border-none rounded-md'>X</p>
         </div>
     </div>

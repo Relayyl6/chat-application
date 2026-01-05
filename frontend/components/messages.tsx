@@ -7,7 +7,7 @@ import Mini from './mini';
 const Messages = ({
   id: chatId
 }: {
-  id: number
+  id: string
 }) => {
     // const [ lastMsg, setLastMsg ] = useState<string | undefined>(undefined);
     const { messagesByChat } = useAppContext();

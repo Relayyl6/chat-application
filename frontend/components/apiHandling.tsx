@@ -1,6 +1,8 @@
 "use client";
 
-const API_BASE = "http://localhost:5001/api";
+import { redirect } from "next/navigation";
+
+const API_BASE = "http://localhost:5001/api/v1";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -61,6 +63,7 @@ const apiHandling = async <T = unknown>(
 
       if (response.status === 401) {
         console.error("Unauthorized - redirect to login");
+        redirect("/log-in")
       }
 
       if (response.status >= 500) {

@@ -8,7 +8,7 @@ const Mini = ({
   time,
   date
 }: {
-  id: number,
+  id: string,
   time?: boolean | undefined,
   date?: string
 }) => {
