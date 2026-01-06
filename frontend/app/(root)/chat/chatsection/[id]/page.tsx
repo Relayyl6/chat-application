@@ -8,6 +8,7 @@ import InputSection from '@/components/InputSection'
 import { useParams } from 'next/navigation'
 import { useAppContext } from '@/context/useContext'
 import { useMounted } from '@/hooks/useMounted'
+import { DNA } from 'react-loader-spinner'
 // import useMounted from '@/hooks/useMounted'
 
 
@@ -27,7 +28,18 @@ const Page = () => {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" })
     }, [messages])
 
-  if (!mounted) return null;
+  if (!mounted) return (
+    <div className="flex items-center justify-center w-full h-full">
+      <DNA
+        height={80}
+        width={80}
+        wrapperStyle={{}}
+        wrapperClass="dna-wrapper"
+        visible={true}
+        ariaLabel='dna-loading'
+      />
+    </div>
+  )
 
     // const person = people.order.find(p => p === chatId);
     const person = people.byId[chatId]
@@ -35,7 +47,16 @@ const Page = () => {
     if (!person) {
       return (
         <div className="flex items-center justify-center w-full h-full">
-          <p className="text-white text-xl">Chat not found</p>
+          <p className="text-white text-xl">
+            <DNA
+              height={80}
+              width={80}
+              wrapperStyle={{}}
+              wrapperClass="dna-wrapper"
+              visible={true}
+              ariaLabel='dna-loading'
+            />
+          </p>
         </div>
       );
     }
