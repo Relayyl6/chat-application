@@ -10,7 +10,7 @@ import { nanoid } from "nanoid";
 // }
 
 const Header = ({ text, onClick, onPress, searchValue, handleChange, something, title, firstLine, setName, setFirstLine }: HeaderProps) => {
-  const { setPeople, people } = useAppContext()
+  const { setPeople } = useAppContext()
   const addPerson = () => {
     const id = nanoid();
     // const updatedId = (people.at(-1)?.id ?? 0) + 1; // or with optional chaining const updatedId = people?.[people.length - 1]?.id ?? 0 + 1;
@@ -29,7 +29,7 @@ const Header = ({ text, onClick, onPress, searchValue, handleChange, something, 
     setName("")
     setFirstLine("")
   }
-  console.log(something)
+  // console.log(something)
   return (
     <div className='flex flex-col bg-red-800 relative rounded-t-lg'>
       <div className='flex flex-row justify-between w-full items-center p-3'>

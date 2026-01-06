@@ -16,10 +16,6 @@ const Page = () => {
     const { messagesByChat, setMessagesByChat, people } = useAppContext();
     const bottomRef = useRef<HTMLDivElement | null>(null)
 
-    useEffect(() => {
-      localStorage.setItem("messagesByChat", JSON.stringify(messagesByChat))
-    }, [messagesByChat])
-
     const messages = useMemo(() => messagesByChat[chatId] ?? [],
       [messagesByChat, chatId]
     )
@@ -28,8 +24,8 @@ const Page = () => {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" })
     }, [messages])
 
-    const person = people.find(p => p.id === parseInt(chatId)) as Item;
-
+    // const person = people.order.find(p => p === chatId);
+    const person = people.byId[chatId]
     // Handle case where person is not found
     if (!person) {
       return (
@@ -46,7 +42,7 @@ const Page = () => {
       me: 'bg-green-500',
     };
 
-    console.log(aliasBgMap["you" as user])
+    // console.log(aliasBgMap["you" as user])
   return (
     <div className="flex flex-col p-2 gap-2 w-full h-full max-md:hidden">
       <ChatHeader

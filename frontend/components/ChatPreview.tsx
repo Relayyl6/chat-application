@@ -8,12 +8,6 @@ import ChatCard from './ChatCard'
 import { useAppContext } from '@/context/useContext';
 
 const ChatPreview = () => {
-    const [todayDate, setTodayDate] = useState("");
-
-    useEffect(() => {
-      setTodayDate(new Date().toISOString());
-    }, []);
-
     // const chatHistory = [];
     const { people } = useAppContext();
     const [ name, setName ] = useState<string>("");
@@ -24,6 +18,7 @@ const ChatPreview = () => {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setSearchValue(e.target.value)
     }
+
 
   return (
     <main className='flex flex-col w-[350px] min-w-[300px] sm:w-[400px] sm:min-w-[350px] max-w-sm max-md:rounded-r-lg bg-gray-800 p-3 rounded-tl-xl'>
@@ -51,7 +46,7 @@ const ChatPreview = () => {
                   <ChatCard
                     id={id}
                     name={person.title}
-                    date={person.message?.at(-1)?.timestamp ?? todayDate}
+                    date={person.message?.at(-1)?.timestamp ?? ""}
                   />
                 </div>
               )

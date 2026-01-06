@@ -14,7 +14,7 @@ declare interface Message {
 
 declare interface Item {
   title: string,
-  id: number,
+  id: string,
   firstLine: string,
 }
 
@@ -41,7 +41,7 @@ declare interface GenerateResponse {
 declare interface InputProps {
   message: MessageProps[],
   setMessage: Dispatch<SetStateAction<MessageProps[]>>,
-  activePersonId: number
+  activePersonId: string
 }
 
 declare interface HeaderProps {
@@ -57,12 +57,25 @@ declare interface HeaderProps {
   setFirstLine: React.Dispatch<React.SetStateAction<string>>
 }
 
-declare // Define the shape of your context
-interface AppContextType {
+// Define the shape of your context
+declare interface AppContextType {
   messagesByChat: Record<string, MessageProps[]>;
   setMessagesByChat: React.Dispatch<React.SetStateAction<Record<string, MessageProps[]>>>;
   aiChatMessage: boolean;
   setAiChatMessage: React.Dispatch<React.SetStateAction<boolean>>;
-  people: MessageContainerProp[];
-  setPeople: React.Dispatch<React.SetStateAction<MessageContainerProp[]>>;
+  people: PeopleState;
+  setPeople: React.Dispatch<React.SetStateAction<PeopleState>>;
+}
+
+declare type PeopleState = {
+  byId: Record<string, MessageContainerProp>;
+  order: string[];
+};
+
+
+declare interface ChatCardProps {
+  id: string;
+  name: string;
+  lastMessage?: string;
+  date?: string;
 }

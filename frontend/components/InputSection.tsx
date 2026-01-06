@@ -14,19 +14,32 @@ const InputSection = ({
   const [ error, setError ] = useState("");
   const { aiChatMessage, setPeople } = useAppContext();
   const onNewMessage = (personId: string, text: string) => {
-    setPeople(prev => ({
+    setPeople(prev => {
+      const person = prev.byId[personId];
+      if (!person) {
+        console.warn("onNewMessage called with invalid ID:", personId);
+        return prev;
+      };
+
+      const newMessage = {
+        id: crypto.randomUUID(),
+        text,
+        timestamp: new Date().toLocaleTimeString()
+      };
+
+      return {
       byId: {
         ...prev.byId,
         [personId]: {
-          ...prev.byId[personId],
-          firstLine: text
+          ...person,
+          message: [...person.message, newMessage]
         }
       },
       order: [
         personId,
         ...prev.order.filter(id => id !== personId)
       ]
-    }))
+    }})
   }
 
   const addItem = async () => {
@@ -36,9 +49,9 @@ const InputSection = ({
       text: text
     }
     setMessage((prev: MessageProps[]) => [...prev, userMessage]);
-    console.log(message);
+    // console.log(message);
     onNewMessage(activePersonId, text as string);
-    setIsLoading(true) 
+    setIsLoading(true)
     try {
       let aiMessage: MessageProps;
       let chatResponse: MessageProps;

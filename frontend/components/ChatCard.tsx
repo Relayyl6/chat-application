@@ -3,12 +3,6 @@ import React from 'react'
 import Messages from './messages'
 import Mini from './mini'
 
-interface ChatCardProps {
-    name: string,
-    date: string
-    id?: number
-}
-
 const ChatCard = ({ name, date, id }: ChatCardProps) => {
     // console.log(date)
   return (
@@ -18,11 +12,11 @@ const ChatCard = ({ name, date, id }: ChatCardProps) => {
             <div className='flex justify-between gap-2 w-full line-clamp-1'>
                 <h4 className='text-14 leading-6 font-semibold text-black truncate grow'>{name}</h4>
                 <h3 className='text-base font-sans text-gray-700 flex justify-end shrink-0'>
-                    <Mini id={id as number} time={true} date={date} />
+                    <Mini id={id as string} time={true} date={date} />
                 </h3>
             </div>
             <div className='flex flex-row justify-between items-center gap-2'>
-                <Messages id={id as number} />
+                <Messages id={id as string} />
                 <p className='p-1 flex items-center justify-center'>X</p>
             </div>
         </div>

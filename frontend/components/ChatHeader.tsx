@@ -3,7 +3,7 @@ import React from 'react'
 interface Props {
     title: string | undefined,
     subTitle: string | undefined,
-    id: number | undefined
+    id: string | undefined
 }
 
 const ChatHeader = ({
