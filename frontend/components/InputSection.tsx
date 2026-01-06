@@ -16,30 +16,34 @@ const InputSection = ({
   const onNewMessage = (personId: string, text: string) => {
     setPeople(prev => {
       const person = prev.byId[personId];
+      console.log(personId)
       if (!person) {
         console.warn("onNewMessage called with invalid ID:", personId);
-        return prev;
+        return prev;  
       };
 
-      const newMessage = {
-        id: crypto.randomUUID(),
+      const newMessage: MessageProps = {
+        alias: "me",
         text,
-        timestamp: new Date().toLocaleTimeString()
+        timestamp: new Date().toISOString()
       };
+
+      const prevMessage = person.message ?? []
 
       return {
-      byId: {
-        ...prev.byId,
-        [personId]: {
-          ...person,
-          message: [...person.message, newMessage]
-        }
-      },
-      order: [
-        personId,
-        ...prev.order.filter(id => id !== personId)
-      ]
-    }})
+        byId: {
+          ...prev.byId,
+          [personId]: {
+            ...person,
+            message : [...prevMessage, newMessage]
+          }
+        },
+        order: [
+          personId,
+          ...prev.order.filter(id => id !== personId)
+        ]
+      }
+    })
   }
 
   const addItem = async () => {

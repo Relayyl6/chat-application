@@ -1,5 +1,6 @@
+// import { ChatPreview } from '@/components/ClientChatPreview'
+import { ChatPreview } from '@/components/SSRaugmentations/ClientChatPreview'
 import React from 'react'
-import ChatPreview from "@/components/ChatPreview"
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   return (

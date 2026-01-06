@@ -1,12 +1,14 @@
 "use client"
 
-import React, { useEffect, useRef, useMemo } from 'react'
+import React, { useEffect, useRef, useMemo, useState } from 'react'
 // import { people } from '@/utils/names'
 import ChatHeader from '@/components/ChatHeader'
 import ChatBubble from '@/components/ChatBubble'
 import InputSection from '@/components/InputSection'
 import { useParams } from 'next/navigation'
 import { useAppContext } from '@/context/useContext'
+import { useMounted } from '@/hooks/useMounted'
+// import useMounted from '@/hooks/useMounted'
 
 
 const Page = () => {
@@ -15,6 +17,7 @@ const Page = () => {
     const chatId = params.id as string
     const { messagesByChat, setMessagesByChat, people } = useAppContext();
     const bottomRef = useRef<HTMLDivElement | null>(null)
+    const mounted = useMounted()
 
     const messages = useMemo(() => messagesByChat[chatId] ?? [],
       [messagesByChat, chatId]
@@ -23,6 +26,8 @@ const Page = () => {
     useEffect(() => {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" })
     }, [messages])
+
+  if (!mounted) return null;
 
     // const person = people.order.find(p => p === chatId);
     const person = people.byId[chatId]
@@ -78,7 +83,7 @@ const Page = () => {
                   }
                 })
               }
-              activePersonId={parseInt(chatId)}
+              activePersonId={chatId}
             />
           </div>
         )}

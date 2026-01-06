@@ -15,17 +15,21 @@ const Header = ({ text, onClick, onPress, searchValue, handleChange, something, 
     const id = nanoid();
     // const updatedId = (people.at(-1)?.id ?? 0) + 1; // or with optional chaining const updatedId = people?.[people.length - 1]?.id ?? 0 + 1;
     setPeople(prev => ({
-    byId: {
-      ...prev.byId,
-      [id]: {
-        id,
-        title,
-        firstLine,
-        message: []
-      }
-    },
-    order: [...prev.order, id]
-  }));
+      byId: {
+        ...prev.byId,
+        [id]: {
+          id,
+          title,
+          firstLine,
+          message: []
+        }
+      },
+      order: [id, ...prev.order]
+      // order: {
+      //   // ...prev.order,
+      //   return [id, ...prev.order.filter(id => id !== personId)]
+      // }
+    }));
     setName("")
     setFirstLine("")
   }
