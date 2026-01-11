@@ -23,6 +23,7 @@ export const initialPeople: MessageContainerProp[] = [
   { id: "Victor", title: "Victor Mensah", firstLine:"you can absolutely constrain content layouts per route to account for sidebar/navbar dimensions" }
 ];
 
+
 export function normalizePeople(
   people: MessageContainerProp[]
 ): PeopleState {
@@ -37,4 +38,4 @@ export function normalizePeople(
   return { byId, order };
 }
 
-// TODO: custom function the converts the name
+// TODO: custom function the converts the name to valid uuid

@@ -12,7 +12,7 @@ const InputSection = ({
   const [ text, setText ] = useState<string | undefined>("");
   const [ isLoading, setIsLoading ] = useState<boolean>(false);
   const [ error, setError ] = useState("");
-  const { aiChatMessage, setPeople } = useAppContext();
+  const { aiChatMessage, setPeople, setAiChatMessage } = useAppContext();
   const onNewMessage = (personId: string, text: string) => {
     setPeople(prev => {
       const person = prev.byId[personId];
