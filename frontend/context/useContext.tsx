@@ -2,7 +2,7 @@
 
 import { usePersistentState } from '@/hooks/usePersistentState';
 import { initialPeople, normalizePeople } from '@/utils/names';
-import React, { createContext, useState, useContext, useEffect } from 'react'
+import React, { createContext, useState, useContext } from 'react'
 
 // Create context with undefined as default
 export const AppContext = createContext<AppContextType | undefined>(undefined);
