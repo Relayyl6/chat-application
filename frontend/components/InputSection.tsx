@@ -12,11 +12,11 @@ const InputSection = ({
   const [ text, setText ] = useState<string | undefined>("");
   const [ isLoading, setIsLoading ] = useState<boolean>(false);
   const [ error, setError ] = useState("");
-  const { aiChatMessage, setPeople, setAiChatMessage } = useAppContext();
+  const { aiChatMessage, setPeople } = useAppContext();
   const onNewMessage = (personId: string, text: string) => {
     setPeople(prev => {
       const person = prev.byId[personId];
-      console.log(personId)
+      // console.log(personId)
       if (!person) {
         console.warn("onNewMessage called with invalid ID:", personId);
         return prev;  

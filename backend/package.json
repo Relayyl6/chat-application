@@ -1,12 +1,25 @@
 {
+  "name": "chat-backend",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
+  },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
     "dotenv": "^17.2.3",
-    "express": "^5.1.0",
+    "express": "^5.2.1",
     "http": "^0.0.1-security",
-    "mongoose": "^8.19.3",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^8.21.0",
     "process": "^0.11.10",
-    "socket.io": "^4.8.1"
+    "redis": "^5.10.0",
+    "socket.io": "^4.8.3",
+    "winston": "^3.19.0",
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@types/express": "^5.0.5",

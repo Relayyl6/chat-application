@@ -14,7 +14,7 @@ export function usePersistentState<T>(
 
       const parsed = JSON.parse(stored);
 
-      // 🔹 Migration: array → normalized people
+      // Migration: array → normalized people
       if (key === "people" && Array.isArray(parsed)) {
         return normalizePeople(parsed) as T;
       }
