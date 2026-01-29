@@ -2,12 +2,6 @@ import { useAppContext } from '@/context/useContext'
 import React from 'react'
 import ContactForm from './ContactForm'
 import { nanoid } from "nanoid";
-// declare interface MessageContainerProp {
-//   id?: number,
-//   title: string,
-//   firstLine: string,
-//   message: MessageProps[] | []
-// }
 
 const Header = ({ text, onClick, onPress, searchValue, handleChange, something, title, firstLine, setName, setFirstLine }: HeaderProps) => {
   const { setPeople } = useAppContext()
@@ -25,10 +19,6 @@ const Header = ({ text, onClick, onPress, searchValue, handleChange, something, 
         }
       },
       order: [id, ...prev.order]
-      // order: {
-      //   // ...prev.order,
-      //   return [id, ...prev.order.filter(id => id !== personId)]
-      // }
     }));
     setName("")
     setFirstLine("")

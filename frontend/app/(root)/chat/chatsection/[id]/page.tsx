@@ -26,7 +26,7 @@ const Page = () => {
 
     useEffect(() => {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" })
-    }, [messages])
+    }, [messages, mounted])
 
   if (!mounted) return (
     <div className="flex items-center justify-center w-full h-full">

@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from "express";
+import { AppError } from "../utils/AppError";
 
 
 const errorMiddleware = (err: any, req: Request, res: Response, next: NextFunction) => {
@@ -63,6 +64,11 @@ const errorMiddleware = (err: any, req: Request, res: Response, next: NextFuncti
         else if (err.name === "MongoError" || err.code) {
             statusCode = 500;
             message = `Database error: ${err.message}`;
+        }
+        
+        else if (err instanceof AppError) {
+            statusCode = err.statusCode;
+            message = `App Error: ${err.message}`
         }
 
         // Any other unknown errors

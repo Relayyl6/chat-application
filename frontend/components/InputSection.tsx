@@ -3,12 +3,17 @@
 import React, { ChangeEvent, Dispatch, SetStateAction, useState } from 'react'
 import apiHandling from './apiHandling';
 import { useAppContext } from '@/context/useContext';
+import TroubleShoot from './troubleshoot';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { DNA } from 'react-loader-spinner';
 
 const InputSection = ({
   message,
   setMessage,
   activePersonId
  }: InputProps) => {
+  const router = useRouter()
   const [ text, setText ] = useState<string | undefined>("");
   const [ isLoading, setIsLoading ] = useState<boolean>(false);
   const [ error, setError ] = useState("");
@@ -105,9 +110,9 @@ const InputSection = ({
         text: `Error: ${message}`,
         timestamp: new Date().toLocaleTimeString(),
       };
-    
       setMessage((prev: MessageProps[]) => [...prev, errorMessage]);
       setError(`Error: ${message}`);
+      // router.push("/Error?code=UNAUTHORIZED")
     } finally {
       setIsLoading(false)
       setText('');
@@ -139,7 +144,17 @@ const InputSection = ({
           {!isLoading ?
             "Send": (
               <div className="flex justify-center">
-                <div className="animate-spin h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                {/* <div className="animate-spin h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full" /> */}
+                <div className="flex items-center justify-center w-full h-full">
+                  <DNA
+                    height={30}
+                    width={30}
+                    wrapperStyle={{}}
+                    wrapperClass="dna-wrapper"
+                    visible={true}
+                    ariaLabel='dna-loading'
+                  />
+                </div>
               </div>
             )
           }

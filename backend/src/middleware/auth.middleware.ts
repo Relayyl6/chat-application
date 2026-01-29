@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import {jwt} from 'jsonwebtoken';
-import { JWT_SECRET } from '../config/env.js';
+import jwt from 'jsonwebtoken'
+import { JWT_SECRET } from '../config/env.config.js';
 import userModel from '../models/User.ts';
+import { AppError } from '../utils/AppError.ts';
 
 export interface AuthRequest extends Request {
     user?: any
@@ -33,11 +34,7 @@ export const authMiddleware = async (req: AuthRequest, res: Response, next: Next
         decoded = jwt.verify(token, JWT_SECRET);
         // req.userId = decoded.id;
       } catch (error) {
-        // return res.status(401).json({ message: "Invalid token" });
-        const errorMsg = new Error(`Invalid token : ${error}`);
-        // @ts-ignore
-        errorMsg.statusCode = 401
-        return next(errorMsg)
+        return next(new AppError(`Invalid token : ${error}`, 401))
       }
 
       if (!decoded || !decoded.userId) {
@@ -50,16 +47,12 @@ export const authMiddleware = async (req: AuthRequest, res: Response, next: Next
     
       let statusCode;
       if (!user) {
-        const error = new Error("User not found, Invalid Token");
-        (error as any).statusCode = 401
-        return next(error)
+        return next(new AppError("User not found, Invalid Token", 401));
       }
       req.user = user;
       next();
     } catch (error: unknown) {
       console.error("Authentication Error", (error as Error).message)
-      const errorMsg: Error = new Error(`Token is not valid`)
-      (errorMsg as Error).statusCode = 400;
-      return next(errorMsg)
+      return next(new AppError(`An error occurred in the auth middleware ${error}`, 400));
     }
 };

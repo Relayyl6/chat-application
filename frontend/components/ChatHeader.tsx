@@ -1,11 +1,5 @@
 import React from 'react'
 
-interface Props {
-    title: string | undefined,
-    subTitle: string | undefined,
-    id: string | undefined
-}
-
 const ChatHeader = ({
     title,
     subTitle,

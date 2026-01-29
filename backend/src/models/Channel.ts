@@ -3,7 +3,7 @@ import { model, Schema, Types } from "mongoose";
 const channelSchema = new Schema({
     name: {
         type: String,
-        required: function() {
+        required: function(this: { type: string }) {
             return this.type === 'group' || this.type === 'channel';
         },
         trim: true,
@@ -30,8 +30,8 @@ const channelSchema = new Schema({
         },
         role: {
             type: String,
-            enum: ['admin', 'user'],
-            default: 'user'
+            enum: ['admin', 'member'],
+            default: 'member'
         },
         joinedAt: {
             type: Date,

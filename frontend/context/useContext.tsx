@@ -13,11 +13,11 @@ export const ContextProvider = ({
     children: React.ReactNode
 }) => {
     // Use lazy initialization to load from localStorage
-    const [messagesByChat, setMessagesByChat] = usePersistentState<Record<string, MessageProps[]>>("messagesByChat", {});
+    const [ messagesByChat, setMessagesByChat ] = usePersistentState<Record<string, MessageProps[]>>("messagesByChat", {});
 
     const [ aiChatMessage, setAiChatMessage ] = useState<boolean>(false); // would eventualy be in the contextapi to indicate whether its an AI chat
 
-    const [people, setPeople] = usePersistentState<PeopleState>('people', normalizePeople(initialPeople))
+    const [ people, setPeople ] = usePersistentState<PeopleState>('people', normalizePeople(initialPeople))
 
     return (
       <AppContext.Provider value={{

@@ -79,3 +79,9 @@ declare interface ChatCardProps {
   lastMessage?: string;
   date?: string;
 }
+
+declare interface Props {
+  title: string | undefined,
+  subTitle: string | undefined,
+  id: string | undefined
+}

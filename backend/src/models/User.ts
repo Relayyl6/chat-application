@@ -1,7 +1,10 @@
-import { model, Schema } from "mongoose";
+import { model, Schema, HydratedDocument, Model } from "mongoose";
 import bcrypt from 'bcryptjs'
 
-const userSchema = new Schema({
+type UserModel = Model<IUser, {}, IUserMethods>;
+export type UserDocument = HydratedDocument<IUser, IUserMethods>;
+
+const userSchema = new Schema<IUser, UserModel, IUserMethods>({
     username : {
         type: String,
         required: true,
@@ -33,18 +36,19 @@ const userSchema = new Schema({
     },
     lastSeen: {
         type: Date,
-        deault: Date.now
+        default: Date.now
     }
 }, {
     timestamps: true
 })
 
-
-userSchema.pre('save', async function(next) {
+userSchema.pre('save', async function(this: any, next: any) {
     if (!this.isModified('password')) return next()
+    if (!this.isModified('avatar')) return next()
 
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
+    this.avatar = `https://ui-avatars.com/api/?name=${this.username}&background=random&size=128`
     next();
 })
 
@@ -52,6 +56,6 @@ userSchema.methods.comparePassword = async function(candidatePassword: string): 
     return bcrypt.compare(candidatePassword, this.password);
 }
 
-const userModel = model('User', userSchema);
+const userModel = model<IUser, UserModel>('User', userSchema);
 
 export default userModel;
