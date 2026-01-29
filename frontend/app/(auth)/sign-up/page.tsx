@@ -1,3 +1,5 @@
+"use client"
+
 import * as React from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -14,9 +16,8 @@ import Stack from '@mui/material/Stack';
 import MuiCard from '@mui/material/Card';
 import { styled } from '@mui/material/styles';
 import { GoogleIcon, FacebookIcon, SitemarkIcon } from '@/components/SitemarkIcon';
-// import AppTheme from '../shared-theme/AppTheme';
-// import ColorModeSelect from '../shared-theme/ColorModeSelect';
-// import { GoogleIcon, FacebookIcon, SitemarkIcon } from './components/CustomIcons';
+import AppTheme from '@/components/Apptheme';
+import ColorModeSelect from '@/components/customizations/ColorModeSelect';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -120,7 +121,7 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
   };
 
   return (
-    <Apptheme {...props}>
+    <AppTheme {...props}>
       <CssBaseline enableColorScheme />
       <ColorModeSelect sx={{ position: 'fixed', top: '1rem', right: '1rem' }} />
       <SignUpContainer direction="column" justifyContent="space-between">

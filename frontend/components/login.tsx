@@ -1,3 +1,4 @@
+"use client"
 
 import * as React from 'react';
 import {
@@ -112,7 +113,7 @@ export default function SlotsSignIn() {
         }
         slots={{
           title: Title,
-          subtitle: Subtitle,
+        //   subtitle: Subtitle,
           emailField: () => (
             <TextField
                 id="input-with-icon-textfield"

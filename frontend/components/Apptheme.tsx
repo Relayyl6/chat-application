@@ -4,11 +4,11 @@ import type { ThemeOptions } from '@mui/material/styles';
 // import { inputsCustomizations } from 'customizations/inputs.tsx';
 // 
 import { feedbackCustomizations } from './customizations/feedback';
-import navigationCustomizations from './customizations/navigation';
+import {navigationCustomizations} from './customizations/navigation';
 import { surfacesCustomizations } from './customizations/surfaces';
 import { colorSchemes, typography, shadows, shape } from './themePrimitives';
 import { inputsCustomizations } from './customizations/inputs';
-import dataDisplayCustomizations from './customizations/dataDisplay';
+import {dataDisplayCustomizations} from './customizations/dataDisplay';
 
 interface AppThemeProps {
   children: React.ReactNode;
