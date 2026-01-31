@@ -8,6 +8,7 @@ import { connectToDatabase } from './config/database.ts';
 import { connectRedis } from './config/redis.ts';
 import channelRouter from './routes/channel.routes.ts';
 import messageRouter from './routes/message.routes.ts';
+import { setupDNS } from './utils/dns-resolver.ts';
 
 dotenv.config();
 
@@ -31,11 +32,14 @@ app.get('/health', (req, res) => {
   res.status(200).json({ success: true, timestamp: new Date().toISOString() });
 });
 
-// Initialize Socket.IO
-initializeSocket(httpServer);
+// Initialize Socket.IO and make it accessible in routes
+const io = initializeSocket(httpServer);
+app.set('io', io);
 
 // Start server
 const PORT = process.env.PORT || 3000;
+
+
 
 const startServer = async () => {
   try {
@@ -51,4 +55,5 @@ const startServer = async () => {
   }
 };
 
+setupDNS();
 startServer();

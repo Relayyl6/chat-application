@@ -18,6 +18,7 @@ import { styled } from '@mui/material/styles';
 import { GoogleIcon, FacebookIcon, SitemarkIcon } from '@/components/SitemarkIcon';
 import AppTheme from '@/components/Apptheme';
 import ColorModeSelect from '@/components/customizations/ColorModeSelect';
+import { useRouter } from 'next/navigation';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -68,57 +69,104 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
   const [nameError, setNameError] = React.useState(false);
   const [nameErrorMessage, setNameErrorMessage] = React.useState('');
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [fullName, setFullName] = React.useState("")
+  const [email, setEmail] = React.useState("")
+  const [password, setPassword] = React.useState("")
 
+  const router = useRouter()
   const validateInputs = () => {
-    const email = document.getElementById('email') as HTMLInputElement;
-    const password = document.getElementById('password') as HTMLInputElement;
-    const name = document.getElementById('name') as HTMLInputElement;
-
     let isValid = true;
 
-    if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
       setEmailError(true);
-      setEmailErrorMessage('Please enter a valid email address.');
+      setEmailErrorMessage("Please enter a valid email address.");
       isValid = false;
     } else {
       setEmailError(false);
-      setEmailErrorMessage('');
+      setEmailErrorMessage("");
     }
 
-    if (!password.value || password.value.length < 6) {
-      setPasswordError(true);
-      setPasswordErrorMessage('Password must be at least 6 characters long.');
-      isValid = false;
-    } else {
-      setPasswordError(false);
-      setPasswordErrorMessage('');
-    }
-
-    if (!name.value || name.value.length < 1) {
+    if (!fullName) {
       setNameError(true);
-      setNameErrorMessage('Name is required.');
+      setNameErrorMessage("Please enter a valid email address.");
       isValid = false;
     } else {
       setNameError(false);
-      setNameErrorMessage('');
+      setNameErrorMessage("");
+    }
+
+    if (!password || password.length < 6) {
+      setPasswordError(true);
+      setPasswordErrorMessage("Password must be at least 6 characters long.");
+      isValid = false;
+    } else {
+      setPasswordError(false);
+      setPasswordErrorMessage("");
     }
 
     return isValid;
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    if (nameError || emailError || passwordError) {
-      event.preventDefault();
-      return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+  
+    if (!validateInputs()) return; // ❗ STOP if invalid
+  
+    setIsLoading(true);
+  
+    try {
+      await register();
+    } catch (error) {
+      console.error("An error occured", error)
+    } finally {
+      setIsLoading(false);
     }
-    const data = new FormData(event.currentTarget);
-    console.log({
-      name: data.get('name'),
-      lastName: data.get('lastName'),
-      email: data.get('email'),
-      password: data.get('password'),
-    });
   };
+
+  const register = async () => {
+    try {
+      const response = await fetch(`${process.env.API_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          username: fullName,
+          email,
+          password
+        })
+      })
+      const data = await response.json()
+  
+      if (!response.ok) {
+        throw new Error(data.message || "user doesnt exist")
+      }
+  
+      localStorage.setItem('token', data.token)
+      localStorage.setItem('user', data.user)
+  
+      router.push("/log-in")
+    } catch (error) {
+      console.error("An error occurred", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  //   if (nameError || emailError || passwordError) {
+  //     event.preventDefault();
+  //     return;
+  //   }
+  //   const data = new FormData(event.currentTarget);
+  //   console.log({
+  //     name: data.get('name'),
+  //     lastName: data.get('lastName'),
+  //     email: data.get('email'),
+  //     password: data.get('password'),
+  //   });
+  // };
 
   return (
     <AppTheme {...props}>
@@ -148,6 +196,8 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
                 fullWidth
                 id="name"
                 placeholder="Jon Snow"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
                 error={nameError}
                 helperText={nameErrorMessage}
                 color={nameError ? 'error' : 'primary'}
@@ -162,6 +212,8 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
                 placeholder="your@email.com"
                 name="email"
                 autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 variant="outlined"
                 error={emailError}
                 helperText={emailErrorMessage}
@@ -179,6 +231,8 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
                 id="password"
                 autoComplete="new-password"
                 variant="outlined"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 error={passwordError}
                 helperText={passwordErrorMessage}
                 color={passwordError ? 'error' : 'primary'}

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken'
+import * as jwt from 'jsonwebtoken'
 import { JWT_SECRET } from '../config/env.config.js';
 import userModel from '../models/User.ts';
 import { AppError } from '../utils/AppError.ts';
@@ -29,9 +29,9 @@ export const authMiddleware = async (req: AuthRequest, res: Response, next: Next
       }
 
       let decoded;
-
+      const secretKey = process.env.JWT_SECRET || 'your_secret_key';
       try {
-        decoded = jwt.verify(token, JWT_SECRET);
+        decoded = jwt.verify(token, secretKey) as { userId: string };
         // req.userId = decoded.id;
       } catch (error) {
         return next(new AppError(`Invalid token : ${error}`, 401))
@@ -45,7 +45,6 @@ export const authMiddleware = async (req: AuthRequest, res: Response, next: Next
 
       let user = await userModel.findById(decoded.userId).select('-password') 
     
-      let statusCode;
       if (!user) {
         return next(new AppError("User not found, Invalid Token", 401));
       }

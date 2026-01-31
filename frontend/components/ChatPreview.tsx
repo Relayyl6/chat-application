@@ -10,7 +10,7 @@ import { useAppContext } from '@/context/useContext';
 const ChatPreview = () => {
     // const chatHistory = [];
     const { people } = useAppContext();
-    const [ name, setName ] = useState<string>("");
+    // const [ name, setName ] = useState<string>("");
     const [ firstLine, setFirstLine ] = useState<string>("")
     const [ something, setSomething ] = useState(false);
     const [ another, setAnother ] = useState(true);
@@ -19,9 +19,28 @@ const ChatPreview = () => {
       setSearchValue(e.target.value)
     }
 
+    const [mode, setMode] = useState<"dm" | "group">("dm");
+    
+    const [name, setName] = useState("");
+    const [userId, setUserId] = useState("");
+    const [extraInfo, setExtraInfo] = useState("");
+    const [members, setMembers] = useState<string[]>([""]);
+    
+    const filteredPeople = people.order.filter((id: string) => {
+      const person = people.byId[id];
+
+      const search = searchValue.toLowerCase().trim();
+
+      return (
+        person.title.toLowerCase().includes(search) ||
+        person.firstLine.toLowerCase().includes(search)
+      );
+    });
+
+
 
   return (
-    <main className='flex flex-col w-[350px] min-w-[300px] sm:w-[400px] sm:min-w-[350px] max-w-sm max-md:rounded-r-lg bg-gray-800 p-3 rounded-tl-xl'>
+    <main className='flex flex-col w-full min-w-full sm:w-[400px] sm:min-w-[350px] max-w-sm max-md:rounded-r-lg bg-bg-card p-3 rounded-tl-xl'>
       <Header
         text="Chat"
         onClick={() => setAnother(prev => !prev)}
@@ -29,29 +48,47 @@ const ChatPreview = () => {
         something={something}
         searchValue={searchValue}
         handleChange={handleChange}
-        title={name}
-        firstLine={firstLine}
-        setFirstLine={setFirstLine}
+        title="New Chat"
+
+        name={name}
         setName={setName}
+
+        userId={userId}
+        setUserId={setUserId}
+
+        extraInfo={extraInfo}
+        setExtraInfo={setExtraInfo}
+
+        mode={mode}
+        setMode={setMode}
+
+        members={members}
+        setMembers={setMembers}
       />
+
       
-      <div className='w-full h-px bg-gray-700'/>
+      <div className='w-full h-px bg-gray-700 border-border-strong border'/>
       <div className='mt-2 flex-1 min-h-0 h-full'>
-        <div className='mt-2 bg-green-800 flex flex-col w-full h-full overflow-y-auto no-scrollbar'>
-          {
-            people.order.map((id: string) => {
+        <div className='mt-2 bg-bg-card flex flex-col w-full h-full overflow-y-auto no-scrollbar'>
+          {filteredPeople.length === 0 ? (
+            <p className="text-gray-400 text-sm p-3">No chats found</p>
+          ) : (
+            filteredPeople.map((id: string) => {
               const person = people.byId[id];
               return (
-                <div className='flex flex-row justify-between box-border m-1 bg-white' key={id}>
+                <div
+                  className='flex flex-row justify-between box-border m-1 bg-bg-input rounded-md'
+                  key={id}
+                >
                   <ChatCard
                     id={id}
                     name={person.title}
                     date={person.message?.at(-1)?.timestamp ?? ""}
                   />
                 </div>
-              )
+              );
             })
-          }
+          )}
         </div>
       </div>
     </main>

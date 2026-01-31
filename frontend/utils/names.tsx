@@ -23,6 +23,18 @@ export const initialPeople: MessageContainerProp[] = [
   { id: "Victor", title: "Victor Mensah", firstLine:"you can absolutely constrain content layouts per route to account for sidebar/navbar dimensions" }
 ];
 
+export const TopItem: SidebarItem[] = [
+  {id: 1, title: "Ch", expandedTitle: "Chats", ref: "chat"},
+  {id: 2, title: "St", expandedTitle: "Status", ref: "status"},
+  {id: 3, title: "Ca", expandedTitle: "Calls", ref: "calls"}
+]
+
+export const BottomItem: SidebarItem[] = [
+  {id: 1, title: "Sm", expandedTitle: "Starred messages", ref: "Starred"},
+  {id: 2, title: "Ac", expandedTitle: "Archived chats", ref: "Archived"},
+  {id: 3, title: "Se", expandedTitle: "Settings", ref: "settings"},
+  {id: 4, title: "Pr", expandedTitle: "Proiles", ref: "Proiles"}
+]
 
 export function normalizePeople(
   people: MessageContainerProp[]

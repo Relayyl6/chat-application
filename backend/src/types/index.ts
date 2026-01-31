@@ -1,4 +1,4 @@
-interface IUser {
+export interface IUser {
   username: string;
   email: string;
   password: string;
@@ -7,6 +7,6 @@ interface IUser {
   avatar?: string | null;
 }
 
-interface IUserMethods {
+export interface IUserMethods {
   comparePassword(candidatePassword: string): Promise<boolean>;
 }

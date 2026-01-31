@@ -3,16 +3,6 @@ import type { Metadata } from "next";
 import "./globals.css";
 import ContextProvider from "@/context/useContext";
 
-// const geistSans = Geist({
-//   variable: "--font-geist-sans",
-//   subsets: ["latin"],
-// });
-
-// const geistMono = Geist_Mono({
-//   variable: "--font-geist-mono",
-//   subsets: ["latin"],
-// });
-
 export const metadata: Metadata = {
   title: "WeChat",
   description: "Welcome to the We Chat chat application",
@@ -26,6 +16,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  
   return (
     <html lang="en">
       <body

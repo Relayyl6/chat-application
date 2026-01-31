@@ -1,8 +1,8 @@
-import {z} from 'zod';
+import {z, ZodError } from 'zod';
 import { NextFunction, Request, Response } from 'express';
-import { AppError } from '../utils/AppError';
+import { AppError } from '../utils/AppError.ts';
 import userModel from '../models/User.ts';
-import { generateToken } from '../utils/helper';
+import { generateToken } from '../utils/helper.ts';
 
 const registerSchema = z.object({
     username: z.string().min(3).max(20),
@@ -26,16 +26,20 @@ export const SignUp = async (req: Request, res: Response, next: NextFunction) =>
         }
 
         // Create user
-        const newUser = new userModel.create({ username, email, password });
+        const newUser = await userModel.create({ username, email, password });
 
         // generate token
-        const token = generateToken(newUser._id);
+        const token = await generateToken(newUser._id);
         await newUser.save();
 
-        res.status(201).json({ user: newUser, token });
-    } catch (error) {
-        if (error instanceof z.ZodError) {
-            return res.status(400).json({ errors: error.errors });
+        res.status(201).json({
+            user: newUser,
+            token
+        });
+    } catch (err) {
+        if (err instanceof z.ZodError) {
+            //@ts-ignore
+          return res.status(400).json({ errors: (err as ZodError).errors });
         }
         next(new AppError("Server error while registering", 500));
     }
@@ -46,7 +50,7 @@ export const LogIn = async (req: Request, res: Response, next: NextFunction) => 
         const { email, password } = loginSchema.parse(req.body);
 
         // find user
-        const user = userModel.findOne({ email });
+        const user = await userModel.findOne({ email });
 
         if (!user) {
             return next(new AppError("Invalid credentials", 401))
@@ -66,6 +70,7 @@ export const LogIn = async (req: Request, res: Response, next: NextFunction) => 
         res.status(200).json({ user, token });
     } catch (error) {
         if (error instanceof z.ZodError) {
+            //@ts-ignore
             return res.status(400).json({ errors: error.errors });
         }
         next(new AppError("Server error while loggin in", 500));

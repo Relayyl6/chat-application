@@ -70,15 +70,15 @@ const Page = () => {
 
     // console.log(aliasBgMap["you" as user])
   return (
-    <div className="flex flex-col p-2 gap-2 w-full h-full max-md:hidden">
+    <div className="flex flex-col p-2 gap-2 w-full h-full max-md:hidden rounded-xl">
       <ChatHeader
         title={title}
         subTitle={firstLine}
         id={userId}
       />
-      <div className="flex-1 min-h-0 h-full relative">
+      <div className="flex-1 min-h-0 h-full relative rounded-xl">
         {messages && (
-          <div className='w-full h-full gap-1 flex flex-col relative bg-blue-500 pt-2 rounded-br-xl'>
+          <div className='w-full h-full gap-1 flex flex-col relative bg-bg-main pt-2 rounded-xl'>
             <div className="overflow-y-auto no-scrollbar gap-2 flex-1 px-2">
               {messages?.map(
                 (t: MessageProps) => (

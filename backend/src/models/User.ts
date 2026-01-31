@@ -1,5 +1,6 @@
 import { model, Schema, HydratedDocument, Model } from "mongoose";
 import bcrypt from 'bcryptjs'
+import { IUser, IUserMethods } from "../types/index.ts";
 
 type UserModel = Model<IUser, {}, IUserMethods>;
 export type UserDocument = HydratedDocument<IUser, IUserMethods>;

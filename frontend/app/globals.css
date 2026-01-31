@@ -12,6 +12,81 @@
   --font-mono: var(--font-geist-mono);
 }
 
+@theme {
+  /* =========================
+     🌑 DARK BACKGROUND LAYERS
+     ========================= */
+  --color-bg-main: #0B0F14;        /* App background */
+  --color-bg-card: #111827;        /* Form/card container */
+  --color-bg-input: #1F2937;       /* Input fields */
+  --color-bg-inner: #1A2230;       /* Inner dark surfaces */
+
+  /* =========================
+     🧱 BORDERS & DIVIDERS
+     ========================= */
+  --color-border-subtle: #2D3748;
+  --color-border-default: #374151;
+  --color-border-strong: #4B5563;
+
+  /* =========================
+     🔤 TEXT COLORS
+     ========================= */
+  --color-text-primary: #FFFFFF;   /* Headings */
+  --color-text-main: #E5E7EB;      /* Normal text */
+  --color-text-muted: #9CA3AF;     /* Labels */
+  --color-text-placeholder: #6B7280;
+
+  /* Links */
+  --color-text-link: #93C5FD;
+
+  /* =========================
+     🔵 PRIMARY ACCENT (BLUE)
+     ========================= */
+  --color-blue-primary: #2563EB;   /* Main brand blue */
+  --color-blue-glow: #3B82F6;      /* Focus glow */
+  --color-blue-soft: #60A5FA;      /* Soft highlights */
+  --color-blue-link: #93C5FD;      /* Link text */
+
+  /* =========================
+     ✨ INPUT STATES
+     ========================= */
+  --color-input-border: #2D3748;
+  --color-input-border-focus: #2563EB;
+  --color-input-text: #F9FAFB;
+
+  /* =========================
+     ⬜ LIGHT BUTTON (Sign In)
+     ========================= */
+  --color-btn-light-bg: #E5E7EB;
+  --color-btn-light-hover: #D1D5DB;
+  --color-btn-light-text: #111827;
+
+  /* =========================
+     🌐 SOCIAL BRAND COLORS
+     ========================= */
+  --color-google-blue: #4285F4;
+  --color-google-red: #EA4335;
+  --color-google-yellow: #FBBC05;
+  --color-google-green: #34A853;
+
+  --color-facebook-blue: #1877F2;
+
+  /* =========================
+     ☑️ CHECKBOX
+     ========================= */
+  --color-checkbox-border: #4B5563;
+  --color-checkbox-checked: #2563EB;
+  --color-checkbox-checkmark: #FFFFFF;
+
+  /* =========================
+     🌟 SHADOWS & GLOWS
+     ========================= */
+  --shadow-card: 0 10px 40px rgba(0, 0, 0, 0.6);
+  --shadow-blue-glow: 0 0 12px rgba(59, 130, 246, 0.6);
+  --shadow-blue-focus: 0 0 0 2px rgba(37, 99, 235, 0.7);
+  --highlight-inner: rgba(255, 255, 255, 0.05);
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
@@ -32,4 +107,14 @@ body {
 .no-scrollbar {
     -ms-overflow-style: none; /* IE and Edge */
     scrollbar-width: none; /* Firefox */
+}
+
+/* Hide scrollbar but keep scroll functionality */
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE & Edge */
+  scrollbar-width: none;     /* Firefox */
 }

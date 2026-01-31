@@ -58,6 +58,7 @@ export const createChannel = async (req: AuthRequest, res: Response, next: NextF
         })
     } catch (error: any) {
         if (error instanceof z.ZodError) {
+            //@ts-ignore
             return res.status(400).json({ errors: error.errors });
         }
         next(new AppError("Server error while loggin in", 500));
@@ -258,6 +259,7 @@ export const addMembers = async (req: AuthRequest, res: Response) => {
 
   } catch (error) {
     if (error instanceof z.ZodError) {
+      //@ts-ignore
       return res.status(400).json({ error: error.errors });
     }
     console.error('Error adding members:', error);
@@ -324,9 +326,10 @@ export const removeMember = async (req: AuthRequest, res: Response) => {
     }
 
     // 3. Remove the user
-    channel.members = channel.members.filter(
-      (u: any) => u.userId.toString() !== userId
-    );
+    const memberToRemove = channel.members.id(userId);
+    if (memberToRemove) {
+      memberToRemove.deleteOne();
+    }
     await channel.save();
 
     // 4. Create system message
@@ -368,6 +371,7 @@ export const removeMember = async (req: AuthRequest, res: Response) => {
 
   } catch (error) {
     if (error instanceof z.ZodError) {
+      //@ts-ignore
       return res.status(400).json({ error: error.errors });
     }
     console.error('Error removing member:', error);
@@ -442,6 +446,7 @@ export const updateMemberRole = async (req: AuthRequest, res: Response) => {
 
   } catch (error) {
     if (error instanceof z.ZodError) {
+      //@ts-ignore
       return res.status(400).json({ error: error.errors });
     }
     console.error('Error updating role:', error);

@@ -129,20 +129,22 @@ const InputSection = ({
   }
 
   return (
-    <div className='sticky bottom-0 w-full p-2 flex flex-row bg-green-400 gap-2 rounded-br-xl'>
+    <div className='w-full p-4 px-5 flex flex-row bg-transparent gap-2 rounded-br-xl'>
       <input
-          value={text}
-          placeholder='Input your chat message'
-          className='text-black placeholder:text-gray-600 bg-red-600 outline-none w-full py-1 px-3 rounded-full font-medium size-xl'
-          onChange={
-            (event: ChangeEvent<HTMLInputElement>) => setText(event.target.value)
-          }
-          onKeyDown={handleKeyDown}
+        value={text}
+        placeholder="Input your chat message"
+        className="
+          text-black placeholder:text-gray-600 bg-bg-inner outline-none w-full py-2 px-3 rounded-full font-medium text-xl
+          transition-transform duration-150 ease-out
+          focus:scale-102 focus:-translate-y-0.5 focus:shadow-md
+        "
+        onChange={(event: ChangeEvent<HTMLInputElement>) => setText(event.target.value)}
+        onKeyDown={handleKeyDown}
       />
-      <button onClick={addItem} className="bg-violet-600 px-3 rounded-lg hover:brightness-75 focus:bg-black">
+      <button onClick={addItem} className="bg-btn-light-text px-3 rounded-lg hover:brightness-75 focus:bg-black">
         <div>
           {!isLoading ?
-            "Send": (
+            <p>{`Send`}</p>: (
               <div className="flex justify-center">
                 {/* <div className="animate-spin h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full" /> */}
                 <div className="flex items-center justify-center w-full h-full">

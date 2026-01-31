@@ -1,11 +1,11 @@
-declare interface Props {
-    params: {
-        [id: string]: string
-    },
-    searchParams: {
-        [key: string]: string | string[] | undefined
-    }
-}
+// declare interface Props {
+//     params: {
+//         [id: string]: string
+//     },
+//     searchParams: {
+//         [key: string]: string | string[] | undefined
+//     }
+// }
 
 declare interface Message {
   alais: string,
@@ -44,17 +44,47 @@ declare interface InputProps {
   activePersonId: string
 }
 
-declare interface HeaderProps {
-  text: string,
+interface HeaderProps {
+  text: string;
+  onClick: () => void;
+  onPress: () => void;
+  searchValue: string;
+  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  something: boolean;
+  title: string;
+
+  mode: "dm" | "group",
+  setMode: React.Dispatch<React.SetStateAction<"dm" | "group">>,
+
+  userId: string,
+  setUserId: React.Dispatch<React.SetStateAction<string>>,
+
+  name: string;
+  setName: React.Dispatch<React.SetStateAction<string>>;
+
+  extraInfo: string;
+  setExtraInfo: React.Dispatch<React.SetStateAction<string>>;
+
+   members: string[],
+  setMembers: React.Dispatch<React.SetStateAction<string[]>>,
+
+  closeModal?: () => void;
+}
+
+
+interface ContactProp {
+  name: string,
+  setName: React.Dispatch<React.SetStateAction<string>>,
+  userId: string,
+  setUserId: React.Dispatch<React.SetStateAction<string>>,
+  mode: "dm" | "group",
+  setMode: React.Dispatch<React.SetStateAction<"dm" | "group">>,
+  extraInfo: string,
+  setExtraInfo: React.Dispatch<React.SetStateAction<string>>,
+  members: string[],
+  setMembers: React.Dispatch<React.SetStateAction<string[]>>,
   onClick: () => void,
-  onPress: () => void,
-  searchValue: string,
-  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-  something: boolean,
-  title: string,
-  firstLine: string,
-  setName: React.Dispatch<React.SetStateAction<string>>
-  setFirstLine: React.Dispatch<React.SetStateAction<string>>
+  closeModal?: () => void
 }
 
 // Define the shape of your context
@@ -85,3 +115,12 @@ declare interface Props {
   subTitle: string | undefined,
   id: string | undefined
 }
+
+declare interface SidebarItem {
+  id: number,
+  title: string,
+  expandedTitle: string,
+  ref: string
+}
+
+declare module 'jsonwebtoken';

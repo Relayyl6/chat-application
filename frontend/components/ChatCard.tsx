@@ -6,8 +6,8 @@ import Mini from './mini'
 const ChatCard = ({ name, date, id }: ChatCardProps) => {
     // console.log(date)
   return (
-    <Link href={`/chat/chatsection/${id}`} className='px-2 py-2 backdrop-blur-sm hover:bg-gray-500 rounded-md flex flex-row items-center justify-start gap-2 w-full max-w-[350px] box-border flex-1'>
-        <div className='aspect-square rounded-full size-14 bg-gray-600' />
+    <Link href={`/chat/chatsection/${id}`} className='px-2 py-2 backdrop-blur-sm hover:bg-gray-500 border border-border-subtle rounded-md flex flex-row items-center justify-start gap-2 w-full max-w-[350px] box-border flex-1'>
+        <div className='aspect-square rounded-full size-14 bg-red-700' />
         <div className='flex flex-col gap-1 h-fit w-full'>
             <div className='flex justify-between gap-2 w-full line-clamp-1'>
                 <h4 className='text-14 leading-6 font-semibold text-black truncate grow'>{name}</h4>

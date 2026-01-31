@@ -10,7 +10,7 @@ export const connectSocket = (token: string) => {
     return socket;
   }
 
-  socket = io('http://localhost:3000', {
+  socket = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000', {
     auth: {
       token: token
     },

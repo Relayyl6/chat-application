@@ -13,6 +13,7 @@ import Typography from '@mui/material/Typography';
 import { styled } from '@mui/material/styles';
 import ForgotPassword from './ForgetPassword';
 import { GoogleIcon, FacebookIcon, SitemarkIcon } from './CustomIcons';
+import { redirect } from 'next/navigation';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -38,6 +39,10 @@ export default function SignInCard() {
   const [passwordError, setPasswordError] = React.useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
   const [open, setOpen] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [email, setEmail] = React.useState("")
+  const [password, setPassword] = React.useState("")
+
 
   const handleClickOpen = () => {
     setOpen(true);
@@ -47,44 +52,86 @@ export default function SignInCard() {
     setOpen(false);
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    if (emailError || passwordError) {
-      event.preventDefault();
-      return;
-    }
-    const data = new FormData(event.currentTarget);
-    console.log({
-      email: data.get('email'),
-      password: data.get('password'),
-    });
-  };
+  // const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  //   if (emailError || passwordError) {
+  //     event.preventDefault();
+  //     return;
+  //   }
+  //   const data = new FormData(event.currentTarget);
+  //   console.log({
+  //     email: data.get('email'),
+  //     password: data.get('password'),
+  //   });
+  // };
 
   const validateInputs = () => {
-    const email = document.getElementById('email') as HTMLInputElement;
-    const password = document.getElementById('password') as HTMLInputElement;
-
     let isValid = true;
 
-    if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
       setEmailError(true);
-      setEmailErrorMessage('Please enter a valid email address.');
+      setEmailErrorMessage("Please enter a valid email address.");
       isValid = false;
     } else {
       setEmailError(false);
-      setEmailErrorMessage('');
+      setEmailErrorMessage("");
     }
 
-    if (!password.value || password.value.length < 6) {
+    if (!password || password.length < 6) {
       setPasswordError(true);
-      setPasswordErrorMessage('Password must be at least 6 characters long.');
+      setPasswordErrorMessage("Password must be at least 6 characters long.");
       isValid = false;
     } else {
       setPasswordError(false);
-      setPasswordErrorMessage('');
+      setPasswordErrorMessage("");
     }
 
     return isValid;
   };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateInputs()) return; // ❗ STOP if invalid
+
+    setIsLoading(true);
+
+    try {
+      await login();
+    } catch (error) {
+      console.error("An error occured", error)
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const login = async () => {
+    try {
+      const response = await fetch(`${process.env.API_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
+      })
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || "user doesnt exist")
+      }
+
+      localStorage.setItem('token', data.token)
+      localStorage.setItem('user', data.user)
+
+      // Connect to Socket.IO after login
+      connectSocket(data.token);
+
+      redirect("/")
+    } catch (error) {
+      console.error("An error occurred", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   return (
     <Card variant="outlined">
@@ -116,6 +163,8 @@ export default function SignInCard() {
             autoComplete="email"
             autoFocus
             required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             fullWidth
             variant="outlined"
             color={emailError ? 'error' : 'primary'}
@@ -143,6 +192,8 @@ export default function SignInCard() {
             id="password"
             autoComplete="current-password"
             autoFocus
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             required
             fullWidth
             variant="outlined"
@@ -161,7 +212,7 @@ export default function SignInCard() {
           Don&apos;t have an account?{' '}
           <span>
             <Link
-              href="/material-ui/getting-started/templates/sign-in/"
+              href="/sign-up"
               variant="body2"
               sx={{ alignSelf: 'center' }}
             >

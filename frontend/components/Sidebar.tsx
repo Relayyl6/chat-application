@@ -3,6 +3,18 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React, { useState } from 'react'
+import Logout from '@mui/icons-material/Logout';
+import { Account } from '@toolpad/core/Account';
+import { AppProvider, Session } from '@toolpad/core/AppProvider';
+import { BottomItem, TopItem } from '@/utils/names';
+
+const demoSession = {
+  user: {
+    name: 'Bharat Kashyap',
+    email: 'bharatkashyap@outlook.com',
+    image: 'https://avatars.githubusercontent.com/u/19550456',
+  },
+};
 
 interface HamburgerProps {
   isOpen: boolean;          // Your useState boolean
@@ -67,29 +79,35 @@ export const AnimatedHamburgerMenu = ({
 };
 
 const Sidebar = () => {
-    interface Item {
-      id: number,
-      title: string,
-      expandedTitle: string,
-      ref: string
-    }
+  const [session, setSession] = React.useState<Session | null>(demoSession);
+    
     const [ toggle, setToggle ] = useState<boolean>(true);
-    const TopItem: Item[] = [
-        {id: 1, title: "Ch", expandedTitle: "Chats", ref: "chat"},
-        {id: 2, title: "St", expandedTitle: "Status", ref: "status"},
-        {id: 3, title: "Ca", expandedTitle: "Calls", ref: "calls"}
-    ]
-    const BottomItem: Item[] = [
-        {id: 1, title: "Sm", expandedTitle: "Starred messages", ref: "Starred"},
-        {id: 2, title: "Ac", expandedTitle: "Archived chats", ref: "Archived"},
-        {id: 3, title: "Se", expandedTitle: "settings", ref: "settings"},
-        {id: 4, title: "Pr", expandedTitle: "Proiles", ref: "Proiles"}
-    ]
+
+    const authentication = React.useMemo(() => {
+      return {
+        signIn: () => {
+          setSession({
+            user: {
+              name: 'Bharat Kashyap',
+              email: 'bharatkashyap@outlook.com',
+              image: 'https://avatars.githubusercontent.com/u/19550456',
+            },
+          });
+        },
+        signOut: () => {
+          setSession(null);
+        },
+      };
+    }, []);
+    
     const pathname = usePathname();
-    const last = pathname.split('/').pop();
+    const segments = pathname.split('/').filter(Boolean); // removes empty strings
+    // segments = ["chat", "chatsection", "vavrvservaer"]
+
+    const section = segments[0] || null;
 
   return (
-    <main className={`${toggle ? "w-[60px]" : "w-[200px]"} duration-500 ease-in-out z-30 backdrop-blur-xl bg-black px-1 relative`}>
+    <main className={`${toggle ? "w-[70px]" : "w-[200px]"} duration-500 ease-in-out z-30 backdrop-blur-xl bg-bg-main px-1 relative flex flex-col justify-between`}>
       <div className='flex flex-col z-40 justify-between px-1 mt-3 gap-2'>
           <button className='hover:bg-gray-500 w-10 rounded-lg p-2 text-white flex items-center justify-center mb-2' onClick={() => setToggle(!toggle)}>
               <AnimatedHamburgerMenu
@@ -100,14 +118,14 @@ const Sidebar = () => {
           </button>
           <div className='flex flex-col relative'>
               {TopItem.map(({id, title, expandedTitle, ref}) => (
-                  <Link key={id} href={ref} className={`${last === ref ? "bg-gray-500 text-black" : ""} p-2 relative rounded-sm mb-2 cursor-pointer`}>
+                  <Link key={id} href={ref} className={`${section === ref ? "bg-gray-500 text-black" : ""} p-2 relative rounded-sm mb-2 cursor-pointer`}>
                       <div className='absolute bg-blue-800 h-4 rounded-lg w-0.5 flex top-1/2 -translate-y-1/2 left-0' />
                       <div className='flex flex-row gap-3'>
-                        <span className="bg-violet-700 w-8 text-white dark:text-black">
+                        <span className="bg-blue-primary w-8 text-white dark:text-black">
                           {title}
                         </span>
                         {!toggle &&
-                          <span className="text-white dark:text-black">
+                          <span className="text-white dark:text-black truncate">
                             {expandedTitle}
                           </span>
                         }
@@ -121,17 +139,17 @@ const Sidebar = () => {
           </div>
       </div>
 
-        <div className='absolute bottom-3'>
+        <div className=''>
           <div className="flex flex-col">
             {BottomItem.map(({id, title, expandedTitle}) => (
               <div key={id} className='hover:bg-gray-500 p-2 relative rounded-sm mb-2 cursor-pointer even:border-b even:border-white'>
                   <div className='absolute bg-blue-800 h-4 rounded-lg w-0.5 flex top-1/2 -translate-y-1/2 left-0' />
                   <div className='flex flex-row gap-3'>
-                    <span className="bg-violet-700 w-8">
+                    <span className="bg-blue-primary w-8">
                       {title}
                     </span>
                     {!toggle && 
-                      <span>
+                      <span className="truncate">
                         {expandedTitle}
                       </span>}
                   </div>
@@ -139,6 +157,47 @@ const Sidebar = () => {
             ))}
           </div>
         </div>
+
+
+        {
+          !toggle ? (
+            <AppProvider authentication={authentication} session={session} >
+              {/* preview-start */}
+              <Account
+                slotProps={{
+                  signInButton: {
+                    color: 'success',
+                  },
+                  signOutButton: {
+                    color: 'success',
+                    startIcon: <Logout />,
+                  },
+                  preview: {
+                    variant: 'expanded',
+                    slotProps: {
+                      avatarIconButton: {
+                        sx: {
+                          width: 'fit-content',
+                          margin: 'auto',
+                        },
+                      },
+                      avatar: {
+                        variant: 'rounded',
+                      },
+                    },
+                  },
+                }}
+              />
+              {/* preview-end */}
+            </AppProvider>
+          ) : (
+            <AppProvider authentication={authentication} session={session}>
+              {/* preview-start */}
+              <Account />
+              {/* preview-end */}
+            </AppProvider>
+          )
+        }
     </main>
   )
 }

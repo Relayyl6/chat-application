@@ -1,7 +1,7 @@
 import { config } from 'dotenv';
 import processs from 'process'
 
-config({ path: `.env.${process.env.NODE_ENV}.local` });
+config({ path: `.env.local` });
 
 export const {
     PORT,

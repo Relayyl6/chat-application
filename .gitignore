@@ -46,8 +46,8 @@ backend/yarn-error.log*
 # -------------------------
 .env
 .env.*
-!frontend/.env.example
-!backend/.env.example
+!frontend/.env.*
+!backend/.env.*
 
 # -------------------------
 # 🌐 Deployment (Vercel)
