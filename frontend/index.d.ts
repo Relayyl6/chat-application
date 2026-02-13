@@ -7,7 +7,7 @@
 //     }
 // }
 
-declare interface Message {
+declare interface MessageInit {
   alais: string,
   message: string
 }
@@ -27,7 +27,7 @@ declare interface MessageContainerProp {
 
 declare interface MessageProps {
   alias?: user,
-  timestamp: string,
+  timestamp: Date | string | number | undefined,
   text: string | undefined
 }
 
@@ -107,7 +107,7 @@ declare interface ChatCardProps {
   id: string;
   name: string;
   lastMessage?: string;
-  date?: string;
+  date?: Date | string;
 }
 
 declare interface Props {
@@ -121,6 +121,56 @@ declare interface SidebarItem {
   title: string,
   expandedTitle: string,
   ref: string
+}
+
+
+declare interface User {
+  id: string;
+  username: string;
+  email: string;
+  avatar?: string;
+  status: 'online' | 'offline' | 'away';
+}
+
+declare interface Message {
+  _id: string;
+  channelId: string;
+  senderId: User;
+  content: string;
+  type: 'text' | 'image' | 'file' | 'system';
+  autoId: number;
+  readBy: string[];
+  deliveredTo: string[];
+  replyTo?: Message;
+  createdAt: string;
+  updatedAt: string;
+  status?: 'sending' | 'sent' | 'failed';
+  tempId?: number;
+}
+
+declare interface Channel {
+  _id: string;
+  name?: string;
+  type: 'direct' | 'group';
+  avatar?: string;
+  description?: string;
+  users: {
+    userId: User;
+    role: 'admin' | 'member';
+    joinedAt: string;
+    lastRead: number;
+    unreadCount: number;
+  }[];
+  lastMessage?: {
+    content: string;
+    senderId: User;
+    sentAt: string;
+    autoId: number;
+  };
+  messageAutoId: number;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 declare module 'jsonwebtoken';

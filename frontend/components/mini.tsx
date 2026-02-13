@@ -2,6 +2,7 @@
 
 import { useAppContext } from '@/context/useContext';
 import { useMemo } from 'react';
+import { formatTime } from './ChatBubble';
 
 const Mini = ({
   id: chatId,
@@ -10,7 +11,7 @@ const Mini = ({
 }: {
   id: string,
   time?: boolean | undefined,
-  date?: string
+  date?: string | Date
 }) => {
     const { messagesByChat } = useAppContext();
     const messages = useMemo(() => messagesByChat[chatId] ?? [],
@@ -22,11 +23,12 @@ const Mini = ({
 
     // Show time if available and time=true, otherwise show date
     if (time && lastTime) {
-        return <p>{lastTime}</p>
+        return <p className='text-xs text-gray-500'>{formatTime(lastTime)}</p>
     }
     
+    // Show last message text
     if (!time && lastMsg) {
-        return <p>{lastMsg}</p>
+        return <p className='text-sm text-gray-600 truncate'>{lastMsg}</p>
     }
     
     // Fallback to showing the date
@@ -36,7 +38,7 @@ const Mini = ({
                 year: "numeric",
                 month: "short",
                 day: "numeric"
-            }) : 'No date'}
+            }) : <p className="text-xs">No date</p>}
         </p>
     )
 }

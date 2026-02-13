@@ -154,20 +154,6 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
     }
   }
 
-  // const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-  //   if (nameError || emailError || passwordError) {
-  //     event.preventDefault();
-  //     return;
-  //   }
-  //   const data = new FormData(event.currentTarget);
-  //   console.log({
-  //     name: data.get('name'),
-  //     lastName: data.get('lastName'),
-  //     email: data.get('email'),
-  //     password: data.get('password'),
-  //   });
-  // };
-
   return (
     <AppTheme {...props}>
       <CssBaseline enableColorScheme />

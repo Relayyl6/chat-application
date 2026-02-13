@@ -6,13 +6,13 @@ import { generateToken } from '../utils/helper.ts';
 
 const registerSchema = z.object({
     username: z.string().min(3).max(20),
-    email: z.string().email(),
-    password: z.string().min(6).max(100)
+    email: z.email({ message: "Invalid email address" }),
+    password: z.string().min(6, { message: "Password must be at least 6 characters" })
 })
 
 const loginSchema = z.object({
-    email: z.string().email(),
-    password: z.string().min(6).max(100)
+    email: z.email({ message: "Invalid email address" }),
+    password: z.string().min(6, { message: "Password must be at least 6 characters" })
 })
 
 export const SignUp = async (req: Request, res: Response, next: NextFunction) => {

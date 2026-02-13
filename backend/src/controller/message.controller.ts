@@ -1,8 +1,8 @@
-import { AuthRequest } from "../middleware/auth.middleware";
+import { AuthRequest } from "../middleware/auth.middleware.ts";
 import { Response, NextFunction } from "express";
-import { AppError } from "../utils/AppError";
-import messageModel from "../models/Message";
-import channelModel from "../models/Channel";
+import { AppError } from "../utils/AppError.ts";
+import messageModel from "../models/Message.ts";
+import channelModel from "../models/Channel.ts";
 
 export const getMessages = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
@@ -110,7 +110,7 @@ export const sendMessage = async (req: AuthRequest, res: Response, next: NextFun
           lastMessageAt: {
             content,
             senderId,
-            sentAt: new Date(),
+            sentAt: Date.now(),
             autoId: nextAutoId 
           }
         }
@@ -149,7 +149,7 @@ export const deleteMessage = async (req: AuthRequest, res: Response, next: NextF
 
     const message = await messageModel.findOneAndUpdate(
       { _id: messageId, senderId: userId },
-      { isDeleted: true, deletedAt: new Date(), content: "" },
+      { isDeleted: true, deletedAt: Date.now(), content: "" },
       { new: true }
     );
 

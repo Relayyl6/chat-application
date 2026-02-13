@@ -18,7 +18,7 @@ const Page = () => {
     const chatId = params.id as string
     const { messagesByChat, setMessagesByChat, people } = useAppContext();
     const bottomRef = useRef<HTMLDivElement | null>(null)
-    const mounted = useMounted()
+    // const mounted = useMounted()
 
     const messages = useMemo(() => messagesByChat[chatId] ?? [],
       [messagesByChat, chatId]
@@ -26,20 +26,20 @@ const Page = () => {
 
     useEffect(() => {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" })
-    }, [messages, mounted])
+    }, [messages])
 
-  if (!mounted) return (
-    <div className="flex items-center justify-center w-full h-full">
-      <DNA
-        height={80}
-        width={80}
-        wrapperStyle={{}}
-        wrapperClass="dna-wrapper"
-        visible={true}
-        ariaLabel='dna-loading'
-      />
-    </div>
-  )
+  // if (!mounted) return (
+  //   <div className="flex items-center justify-center w-full h-full">
+  //     <DNA
+  //       height={80}
+  //       width={80}
+  //       wrapperStyle={{}}
+  //       wrapperClass="dna-wrapper"
+  //       visible={true}
+  //       ariaLabel='dna-loading'
+  //     />
+  //   </div>
+  // )
 
     // const person = people.order.find(p => p === chatId);
     const person = people.byId[chatId]
@@ -83,7 +83,7 @@ const Page = () => {
               {messages?.map(
                 (t: MessageProps) => (
                   <div key={t.timestamp} className={`flex w-full px-2 mb-1 ${t.alias === "me" ? "justify-start" : "justify-end"}`}>
-                    <ChatBubble message={t?.text} timestamp={t?.timestamp} className={`${aliasBgMap[t.alias as user] ?? 'bg-white'}`} />
+                    <ChatBubble message={t.text} timestamp={t?.timestamp as unknown as Date} className={`${aliasBgMap[t.alias as user] ?? 'bg-white'}`} />
                   </div>
                 )
               )}

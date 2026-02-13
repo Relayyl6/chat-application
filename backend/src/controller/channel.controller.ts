@@ -61,7 +61,7 @@ export const createChannel = async (req: AuthRequest, res: Response, next: NextF
             //@ts-ignore
             return res.status(400).json({ errors: error.errors });
         }
-        next(new AppError("Server error while loggin in", 500));
+        next(new AppError("Server error while creating channel", 500));
     }
 }
 
@@ -198,7 +198,7 @@ export const addMembers = async (req: AuthRequest, res: Response) => {
     const newMembers = newUserIds.map(userId => ({
       userId,
       role: 'member' as const,
-      joinedAt: new Date(),
+      joinedAt: Date.now(),
       lastRead: channel.messageAutoId, // Mark all previous messages as read
       unreadCount: 0
     }));

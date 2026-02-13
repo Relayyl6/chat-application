@@ -13,7 +13,9 @@ import Typography from '@mui/material/Typography';
 import { styled } from '@mui/material/styles';
 import ForgotPassword from './ForgetPassword';
 import { GoogleIcon, FacebookIcon, SitemarkIcon } from './CustomIcons';
-import { redirect } from 'next/navigation';
+import { redirect, useRouter } from 'next/navigation';
+import { connectSocket } from '@/services/socket';
+import { api } from '@/lib/api';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -42,6 +44,7 @@ export default function SignInCard() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
+  const router = useRouter ()
 
 
   const handleClickOpen = () => {
@@ -96,9 +99,16 @@ export default function SignInCard() {
     setIsLoading(true);
 
     try {
-      await login();
+      const { user, token } = await api.login(email, password);
+
+       // Save to localStorage
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      
+      // Redirect to chat
+      router.push('/chat');
     } catch (error) {
-      console.error("An error occured", error)
+      console.error("An error occured", error) // setError(error.message)
     } finally {
       setIsLoading(false);
     }

@@ -30,7 +30,7 @@ const InputSection = ({
       const newMessage: MessageProps = {
         alias: "me",
         text,
-        timestamp: new Date().toISOString()
+        timestamp: Date.now()
       };
 
       const prevMessage = person.message ?? []
@@ -54,7 +54,7 @@ const InputSection = ({
   const addItem = async () => {
     const userMessage: MessageProps = {
       alias: "me",
-      timestamp: new Date().toLocaleTimeString(),
+      timestamp: Date.now(),
       text: text
     }
     setMessage((prev: MessageProps[]) => [...prev, userMessage]);
@@ -73,7 +73,7 @@ const InputSection = ({
         aiMessage = {
           alias : 'ai',
           text : response.result,
-          timestamp : new Date().toLocaleDateString()
+          timestamp : Date.now()
         };
 
         setMessage((prev: MessageProps[]) => [...prev, aiMessage]);
@@ -85,7 +85,7 @@ const InputSection = ({
         chatResponse = {
           alias : 'you',
           text : response.result,
-          timestamp : new Date().toLocaleDateString()
+          timestamp : Date.now()
         };
 
         setMessage((prev: MessageProps[]) => [...prev, chatResponse]);
@@ -108,7 +108,7 @@ const InputSection = ({
       const errorMessage: MessageProps = {
         alias: 'you',
         text: `Error: ${message}`,
-        timestamp: new Date().toLocaleTimeString(),
+        timestamp: Date.now(),
       };
       setMessage((prev: MessageProps[]) => [...prev, errorMessage]);
       setError(`Error: ${message}`);

@@ -26,7 +26,6 @@ const Header = ({
   const addPerson = () => {
     // const id = nanoid();
     // const updatedId = (people.at(-1)?.id ?? 0) + 1; // or with optional chaining const updatedId = people?.[people.length - 1]?.id ?? 0 + 1;
-    const someone = 
     setPeople(prev => ({
       byId: {
         ...prev.byId,

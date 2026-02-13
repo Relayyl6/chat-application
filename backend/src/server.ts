@@ -29,7 +29,7 @@ app.use('/api/messages', messageRouter);
 
 // Health check
 app.get('/health', (req, res) => {
-  res.status(200).json({ success: true, timestamp: new Date().toISOString() });
+  res.status(200).json({ success: true, timestamp: Date.now().toISOString() });
 });
 
 // Initialize Socket.IO and make it accessible in routes

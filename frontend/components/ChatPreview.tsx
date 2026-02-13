@@ -71,7 +71,7 @@ const ChatPreview = () => {
       <div className='mt-2 flex-1 min-h-0 h-full'>
         <div className='mt-2 bg-bg-card flex flex-col w-full h-full overflow-y-auto no-scrollbar'>
           {filteredPeople.length === 0 ? (
-            <p className="text-gray-400 text-sm p-3">No chats found</p>
+            <p className="text-gray-400 text-sm p-3 flex items-center justify-center">No chats found</p>
           ) : (
             filteredPeople.map((id: string) => {
               const person = people.byId[id];
