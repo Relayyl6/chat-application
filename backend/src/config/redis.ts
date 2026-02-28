@@ -1,15 +1,19 @@
 import { createClient } from 'redis';
-import { REDIS_URL } from './env.config.ts';
 
-const redisClient = createClient({
-  url: REDIS_URL
+const client = createClient({
+  url: process.env.REDIS_URL,
+  socket: {
+    tls: true,
+    rejectUnauthorized: false
+  }
 });
 
-redisClient.on('error', (err: unknown) => console.error('Redis Client Error', err));
-redisClient.on('connect', () => console.log('Redis Connected'));
+client.on('error', (err) => console.error('Redis error:', err));
 
 export const connectRedis = async () => {
-  await redisClient.connect();
+  await client.connect();
+  console.log('✅ Connected to Redis');
+  return client;
 };
 
-export default redisClient;
+export default client;

@@ -3,7 +3,7 @@ import React from 'react'
 interface ChatBubbleProps {
   message: string;
   timestamp: Date | string | number;
-  className?: string;
+  className?: string | undefined;
 }
 
 export const formatTime = (date: Date | string | number): string => {

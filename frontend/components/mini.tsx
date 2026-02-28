@@ -33,13 +33,13 @@ const Mini = ({
     
     // Fallback to showing the date
     return (
-        <p>
+        <h4>
             {date ? new Date(date).toLocaleDateString("en-US", {
                 year: "numeric",
                 month: "short",
                 day: "numeric"
             }) : <p className="text-xs">No date</p>}
-        </p>
+        </h4>
     )
 }
 

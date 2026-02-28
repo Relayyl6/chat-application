@@ -10,6 +10,7 @@ import channelRouter from './routes/channel.routes.ts';
 import messageRouter from './routes/message.routes.ts';
 import { setupDNS } from './utils/dns-resolver.ts';
 
+
 dotenv.config();
 
 const app = express();
@@ -29,7 +30,7 @@ app.use('/api/messages', messageRouter);
 
 // Health check
 app.get('/health', (req, res) => {
-  res.status(200).json({ success: true, timestamp: Date.now().toISOString() });
+  res.status(200).json({ success: true, timestamp: Date.now().toString() });
 });
 
 // Initialize Socket.IO and make it accessible in routes

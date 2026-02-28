@@ -2,7 +2,7 @@ import { connect } from "mongoose";
 import { MONGODB_URI } from "./env.config.ts";
 import dns from 'dns';
 
-const secret = "mongodb://yemuel_db:q3FC9S3840EVhp5D@cluster0-shard-00-00.s84rfk9.mongodb.net:27017,cluster0-shard-00-01.s84rfk9.mongodb.net:27017,cluster0-shard-00-02.s84rfk9.mongodb.net:27017/myDatabase?ssl=true&replicaSet=atlas-abc123-shard-0&authSource=admin&retryWrites=true&w=majority";
+const secret = "mongodb://yemuel_db:nW28QCiBfNOA5wBm@ac-rugtqzn-shard-00-00.s84rfk9.mongodb.net:27017,ac-rugtqzn-shard-00-01.s84rfk9.mongodb.net:27017,ac-rugtqzn-shard-00-02.s84rfk9.mongodb.net:27017/?ssl=true&replicaSet=atlas-rugtqzn&authSource=admin&retryWrites=true&w=majority"
 
 export const connectToDatabase = async () => {
     try {
@@ -16,7 +16,8 @@ export const connectToDatabase = async () => {
         console.log('Attempting to connect to MongoDB...');
         
         const conn = await connect(secretUri, {
-            serverSelectionTimeoutMS: 10000,
+            serverSelectionTimeoutMS: 30000,
+            socketTimeoutMS: 45000,
             family: 4, // Force IPv4
         });
         // x

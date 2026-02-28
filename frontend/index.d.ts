@@ -1,12 +1,3 @@
-// declare interface Props {
-//     params: {
-//         [id: string]: string
-//     },
-//     searchParams: {
-//         [key: string]: string | string[] | undefined
-//     }
-// }
-
 declare interface MessageInit {
   alais: string,
   message: string
@@ -33,7 +24,6 @@ declare interface MessageProps {
 
 declare type user = "me" | "you" | "ai";
 
-
 declare interface GenerateResponse {
   result: string;
 }
@@ -41,7 +31,9 @@ declare interface GenerateResponse {
 declare interface InputProps {
   message: MessageProps[],
   setMessage: Dispatch<SetStateAction<MessageProps[]>>,
-  activePersonId: string
+  activePersonId: string,
+  /** If true, this chat is a socket-backed channel (not a DM) */
+  isChannel?: boolean
 }
 
 interface HeaderProps {
@@ -65,12 +57,11 @@ interface HeaderProps {
   extraInfo: string;
   setExtraInfo: React.Dispatch<React.SetStateAction<string>>;
 
-   members: string[],
+  members: string[],
   setMembers: React.Dispatch<React.SetStateAction<string[]>>,
 
   closeModal?: () => void;
 }
-
 
 interface ContactProp {
   name: string,
@@ -87,14 +78,21 @@ interface ContactProp {
   closeModal?: () => void
 }
 
-// Define the shape of your context
 declare interface AppContextType {
+  // --- DM state (unchanged) ---
   messagesByChat: Record<string, MessageProps[]>;
   setMessagesByChat: React.Dispatch<React.SetStateAction<Record<string, MessageProps[]>>>;
   aiChatMessage: boolean;
   setAiChatMessage: React.Dispatch<React.SetStateAction<boolean>>;
   people: PeopleState;
   setPeople: React.Dispatch<React.SetStateAction<PeopleState>>;
+
+  // --- Channel / socket state (new) ---
+  channels: Channel[];
+  setChannels: React.Dispatch<React.SetStateAction<Channel[]>>;
+  channelsLoading: boolean;
+  activeChannelId: string | null;
+  setActiveChannelId: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 declare type PeopleState = {
@@ -102,12 +100,11 @@ declare type PeopleState = {
   order: string[];
 };
 
-
 declare interface ChatCardProps {
   id: string;
   name: string;
   lastMessage?: string;
-  date?: Date | string;
+  date: Date | string | number;
 }
 
 declare interface Props {
@@ -122,7 +119,6 @@ declare interface SidebarItem {
   expandedTitle: string,
   ref: string
 }
-
 
 declare interface User {
   id: string;
