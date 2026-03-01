@@ -55,18 +55,6 @@ export default function SignInCard() {
     setOpen(false);
   };
 
-  // const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-  //   if (emailError || passwordError) {
-  //     event.preventDefault();
-  //     return;
-  //   }
-  //   const data = new FormData(event.currentTarget);
-  //   console.log({
-  //     email: data.get('email'),
-  //     password: data.get('password'),
-  //   });
-  // };
-
   const validateInputs = () => {
     let isValid = true;
 
@@ -104,44 +92,18 @@ export default function SignInCard() {
        // Save to localStorage
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
+
+      // Connect to Socket.IO after login
+      connectSocket(token);
       
       // Redirect to chat
-      router.push('/chat');
+      redirect("/chat")
     } catch (error) {
       console.error("An error occured", error) // setError(error.message)
     } finally {
       setIsLoading(false);
     }
   };
-
-  const login = async () => {
-    try {
-      const response = await fetch(`${process.env.API_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email, password })
-      })
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || "user doesnt exist")
-      }
-
-      localStorage.setItem('token', data.token)
-      localStorage.setItem('user', data.user)
-
-      // Connect to Socket.IO after login
-      connectSocket(data.token);
-
-      redirect("/")
-    } catch (error) {
-      console.error("An error occurred", error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   return (
     <Card variant="outlined">

@@ -19,6 +19,8 @@ import { GoogleIcon, FacebookIcon, SitemarkIcon } from '@/components/SitemarkIco
 import AppTheme from '@/components/Apptheme';
 import ColorModeSelect from '@/components/customizations/ColorModeSelect';
 import { useRouter } from 'next/navigation';
+import { connectSocket } from '@/lib/socket';
+import { api } from '@/lib/api';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -116,43 +118,23 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
     setIsLoading(true);
   
     try {
-      await register();
+      const { user, token } = await api.register(fullName, email, password);
+
+       // Save to localStorage
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+
+      // Connect to Socket.IO after login
+      connectSocket(token);
+      
+      // Redirect to chat
+      router.push("/log-in");
     } catch (error) {
       console.error("An error occured", error)
     } finally {
       setIsLoading(false);
     }
   };
-
-  const register = async () => {
-    try {
-      const response = await fetch(`${process.env.API_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          username: fullName,
-          email,
-          password
-        })
-      })
-      const data = await response.json()
-  
-      if (!response.ok) {
-        throw new Error(data.message || "user doesnt exist")
-      }
-  
-      localStorage.setItem('token', data.token)
-      localStorage.setItem('user', data.user)
-  
-      router.push("/log-in")
-    } catch (error) {
-      console.error("An error occurred", error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   return (
     <AppTheme {...props}>
@@ -260,7 +242,7 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
             <Typography sx={{ textAlign: 'center' }}>
               Already have an account?{' '}
               <Link
-                href="/material-ui/getting-started/templates/sign-in/"
+                href="/log-in"
                 variant="body2"
                 sx={{ alignSelf: 'center' }}
               >
