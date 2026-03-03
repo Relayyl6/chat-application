@@ -33,7 +33,9 @@ declare interface InputProps {
   setMessage: Dispatch<SetStateAction<MessageProps[]>>,
   activePersonId: string,
   /** If true, this chat is a socket-backed channel (not a DM) */
-  isChannel?: boolean
+  isChannel?: boolean,
+  /** Optional function to send messages in channels */
+  sendMessage?: (content: string, attachments?: any[], replyTo?: string) => void
 }
 
 interface HeaderProps {
@@ -110,7 +112,9 @@ declare interface ChatCardProps {
 declare interface Props {
   title: string | undefined,
   subTitle: string | undefined,
-  id: string | undefined
+  id: string | undefined,
+  onSearch?: (query: string) => void,
+  isChannel?: boolean
 }
 
 declare interface SidebarItem {
@@ -142,6 +146,8 @@ declare interface Message {
   updatedAt: string;
   status?: 'sending' | 'sent' | 'failed';
   tempId?: number;
+  attachments?: string[];
+  reactions?: Array<{ emoji: string; count: number; userIds: string[] }>;
 }
 
 declare interface Channel {

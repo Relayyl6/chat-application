@@ -1,80 +1,114 @@
-import {z, ZodError } from 'zod';
 import { NextFunction, Request, Response } from 'express';
-import { AppError } from '../utils/AppError.ts';
-import userModel from '../models/User.ts';
-import { generateToken } from '../utils/helper.ts';
+import { AuthRequest } from '../middleware/auth.middleware';
+import { AppError } from '../utils/AppError';
+import {
+    registerUser,
+    loginUser,
+    updateUserStatus,
+    updateUserProfile
+} from '../services/auth.service';
 
-const registerSchema = z.object({
-    username: z.string().min(3).max(20),
-    email: z.email({ message: "Invalid email address" }),
-    password: z.string().min(6, { message: "Password must be at least 6 characters" })
-})
-
-const loginSchema = z.object({
-    email: z.email({ message: "Invalid email address" }),
-    password: z.string().min(6, { message: "Password must be at least 6 characters" })
-})
-
+/**
+ * Sign up / Register new user
+ */
 export const SignUp = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { username, email, password } = registerSchema.parse(req.body);
+        const { username, email, password } = req.body;
 
-        const existingUser = await userModel.findOne({ $or: [{ email }, { username }]});
-
-        if (existingUser) {
-            return next(new AppError("User with given email or username already exists", 400));
-        }
-
-        // Create user
-        const newUser = await userModel.create({ username, email, password });
-
-        // generate token
-        const token = await generateToken(newUser._id);
-        await newUser.save();
+        const result = await registerUser({ username, email, password });
 
         res.status(201).json({
-            user: newUser,
-            token
+            success: true,
+            data: {
+                user: result.user,
+                token: result.token
+            },
+            message: 'User registered successfully'
         });
-    } catch (err) {
-        if (err instanceof z.ZodError) {
-            //@ts-ignore
-          return res.status(400).json({ errors: (err as ZodError).errors });
-        }
-        next(new AppError("Server error while registering", 500));
+    } catch (error) {
+        next(error);
     }
-}
+};
 
+/**
+ * Login user
+ */
 export const LogIn = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { email, password } = loginSchema.parse(req.body);
+        const { email, password } = req.body;
 
-        // find user
-        const user = await userModel.findOne({ email });
+        const result = await loginUser({ email, password });
 
-        if (!user) {
-            return next(new AppError("Invalid credentials", 401))
-        }
-
-        const isMatch = await user.comparePassword(password)
-
-        if (!isMatch) {
-            return next(new AppError("Invalid credentials", 401))
-        }
-
-        user.status = 'online';
-        await user.save();
-        
-        const token = generateToken(user._id);
-
-        res.status(200).json({ user, token });
+        res.status(200).json({
+            success: true,
+            data: {
+                user: result.user,
+                token: result.token
+            },
+            message: 'Logged in successfully'
+        });
     } catch (error) {
-        if (error instanceof z.ZodError) {
-            //@ts-ignore
-            return res.status(400).json({ errors: error.errors });
-        }
-        next(new AppError("Server error while loggin in", 500));
+        next(error);
     }
-}
+};
+
+/**
+ * Update user profile
+ */
+export const updateProfile = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+        const { username, avatar } = req.body;
+        const userId = req.user._id;
+
+        const updatedUser = await updateUserProfile(userId, { username, avatar });
+
+        res.status(200).json({
+            success: true,
+            data: { user: updatedUser },
+            message: 'Profile updated successfully'
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * Change user status
+ */
+export const changeStatus = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+        const { status } = req.body;
+        const userId = req.user._id;
+
+        if (!['online', 'offline', 'away'].includes(status)) {
+            return next(new AppError('Invalid status', 400));
+        }
+
+        const updatedUser = await updateUserStatus(userId, status as 'online' | 'offline' | 'away');
+
+        res.status(200).json({
+            success: true,
+            data: { user: updatedUser },
+            message: 'Status updated successfully'
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * Get current user
+ */
+export const getCurrentUser = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+        res.status(200).json({
+            success: true,
+            data: { user: req.user },
+            message: 'Current user retrieved'
+        });
+    } catch (error) {
+        next(error);
+    }
+};
 
 

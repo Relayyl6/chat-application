@@ -1,7 +1,7 @@
 import { Server } from 'socket.io';
-import channelModel from '../../models/Channel.ts';
-import messageModel from '../../models/Message.ts';
-import { AuthSocket } from '../socket.manager.ts';
+import channelModel from '../../models/Channel';
+import messageModel from '../../models/Message';
+import { AuthSocket } from '../socket.manager';
 
 export const handleMessage = async (io: Server, socket: AuthSocket, data: any) => {
   try {

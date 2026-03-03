@@ -7,11 +7,25 @@ import { connectSocket, disconnectSocket, getSocket } from '@/lib/socket';
 interface SocketContextType {
   socket: Socket | null;
   isConnected: boolean;
-  onNewMessage: (callback: (message: Message) => void) => () => void;
-  onTyping: (callback: (data: { channelId: string; userId: string; isTyping: boolean }) => void) => () => void;
-  onUserStatus: (callback: (data: { userId: string; status: string }) => void) => () => void;
-  onMembersAdded: (callback: (data: any) => void) => () => void;
-  onMemberRemoved: (callback: (data: any) => void) => () => void;
+  // Channel Events
+  onChannelCreated: (callback: (data: any) => void) => () => void;
+  onChannelRenamed: (callback: (data: any) => void) => () => void;
+  onChannelMembersAdded: (callback: (data: any) => void) => () => void;
+  onChannelMemberRemoved: (callback: (data: any) => void) => () => void;
+  onChannelMemberLeft: (callback: (data: any) => void) => () => void;
+  onChannelMemberRoleUpdated: (callback: (data: any) => void) => () => void;
+  // Message Events
+  onMessageSent: (callback: (data: any) => void) => () => void;
+  onMessageEdited: (callback: (data: any) => void) => () => void;
+  onMessageDeleted: (callback: (data: any) => void) => () => void;
+  onMessageReactionAdded: (callback: (data: any) => void) => () => void;
+  onMessagesRead: (callback: (data: any) => void) => () => void;
+  // User Events
+  onUserStatus: (callback: (data: any) => void) => () => void;
+  onUserOnline: (callback: (data: any) => void) => () => void;
+  onUserOffline: (callback: (data: any) => void) => () => void;
+  // Typing
+  onTyping: (callback: (data: any) => void) => () => void;
 }
 
 const SocketContext = createContext<SocketContextType | null>(null);
@@ -45,49 +59,98 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
   }, []);
 
-  const onNewMessage = (callback: (message: Message) => void) => {
+  // Channel Events
+  const onChannelCreated = (callback: (data: any) => void) => {
     if (!socket) return () => {};
-    
-    socket.on('message:new', callback);
-    return () => {
-      socket.off('message:new', callback);
-    };
+    socket.on('channel:created', callback);
+    return () => socket.off('channel:created', callback);
   };
 
-  const onTyping = (callback: (data: { channelId: string; userId: string; isTyping: boolean }) => void) => {
+  const onChannelRenamed = (callback: (data: any) => void) => {
     if (!socket) return () => {};
-    
-    socket.on('user:typing', callback);
-    return () => {
-      socket.off('user:typing', callback);
-    };
+    socket.on('channel:renamed', callback);
+    return () => socket.off('channel:renamed', callback);
   };
 
-  const onUserStatus = (callback: (data: { userId: string; status: string }) => void) => {
+  const onChannelMembersAdded = (callback: (data: any) => void) => {
     if (!socket) return () => {};
-    
+    socket.on('channel:members-added', callback);
+    return () => socket.off('channel:members-added', callback);
+  };
+
+  const onChannelMemberRemoved = (callback: (data: any) => void) => {
+    if (!socket) return () => {};
+    socket.on('channel:member-removed', callback);
+    return () => socket.off('channel:member-removed', callback);
+  };
+
+  const onChannelMemberLeft = (callback: (data: any) => void) => {
+    if (!socket) return () => {};
+    socket.on('channel:member-left', callback);
+    return () => socket.off('channel:member-left', callback);
+  };
+
+  const onChannelMemberRoleUpdated = (callback: (data: any) => void) => {
+    if (!socket) return () => {};
+    socket.on('channel:member-role-updated', callback);
+    return () => socket.off('channel:member-role-updated', callback);
+  };
+
+  // Message Events
+  const onMessageSent = (callback: (data: any) => void) => {
+    if (!socket) return () => {};
+    socket.on('message:sent', callback);
+    return () => socket.off('message:sent', callback);
+  };
+
+  const onMessageEdited = (callback: (data: any) => void) => {
+    if (!socket) return () => {};
+    socket.on('message:edited', callback);
+    return () => socket.off('message:edited', callback);
+  };
+
+  const onMessageDeleted = (callback: (data: any) => void) => {
+    if (!socket) return () => {};
+    socket.on('message:deleted', callback);
+    return () => socket.off('message:deleted', callback);
+  };
+
+  const onMessageReactionAdded = (callback: (data: any) => void) => {
+    if (!socket) return () => {};
+    socket.on('message:reaction-added', callback);
+    return () => socket.off('message:reaction-added', callback);
+  };
+
+  const onMessagesRead = (callback: (data: any) => void) => {
+    if (!socket) return () => {};
+    socket.on('messages:read', callback);
+    return () => socket.off('messages:read', callback);
+  };
+
+  // User Events
+  const onUserStatus = (callback: (data: any) => void) => {
+    if (!socket) return () => {};
     socket.on('user:status', callback);
-    return () => {
-      socket.off('user:status', callback);
-    };
+    return () => socket.off('user:status', callback);
   };
 
-  const onMembersAdded = (callback: (data: any) => void) => {
+  const onUserOnline = (callback: (data: any) => void) => {
     if (!socket) return () => {};
-    
-    socket.on('channel:members:added', callback);
-    return () => {
-      socket.off('channel:members:added', callback);
-    };
+    socket.on('user:online', callback);
+    return () => socket.off('user:online', callback);
   };
 
-  const onMemberRemoved = (callback: (data: any) => void) => {
+  const onUserOffline = (callback: (data: any) => void) => {
     if (!socket) return () => {};
-    
-    socket.on('channel:member:removed', callback);
-    return () => {
-      socket.off('channel:member:removed', callback);
-    };
+    socket.on('user:offline', callback);
+    return () => socket.off('user:offline', callback);
+  };
+
+  // Typing Events
+  const onTyping = (callback: (data: any) => void) => {
+    if (!socket) return () => {};
+    socket.on('user:typing', callback);
+    return () => socket.off('user:typing', callback);
   };
 
   return (
@@ -95,11 +158,21 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       value={{
         socket,
         isConnected,
-        onNewMessage,
-        onTyping,
+        onChannelCreated,
+        onChannelRenamed,
+        onChannelMembersAdded,
+        onChannelMemberRemoved,
+        onChannelMemberLeft,
+        onChannelMemberRoleUpdated,
+        onMessageSent,
+        onMessageEdited,
+        onMessageDeleted,
+        onMessageReactionAdded,
+        onMessagesRead,
         onUserStatus,
-        onMembersAdded,
-        onMemberRemoved
+        onUserOnline,
+        onUserOffline,
+        onTyping
       }}
     >
       {children}

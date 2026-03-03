@@ -1,165 +1,225 @@
-import { AuthRequest } from "../middleware/auth.middleware.ts";
-import { Response, NextFunction } from "express";
-import { AppError } from "../utils/AppError.ts";
-import messageModel from "../models/Message.ts";
-import channelModel from "../models/Channel.ts";
+import { AuthRequest } from '../middleware/auth.middleware';
+import { Response, NextFunction } from 'express';
+import { AppError } from '../utils/AppError';
+import {
+    sendMessage as sendMessageService,
+    getMessages,
+    markMessagesAsRead,
+    deleteMessage as deleteMessageService,
+    editMessage as editMessageService,
+    reactToMessage as reactToMessageService,
+    searchMessages
+} from '../services/message.service';
 
-export const getMessages = async (req: AuthRequest, res: Response, next: NextFunction) => {
+/**
+ * Send message to channel
+ */
+export const sendMessage = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         const { channelId } = req.params;
-        const { before, limit = 50 } = req.query;
+        const { content, attachments, replyTo } = req.body;
 
-        const query: any = { channelId };
-        if (before) {
-            query.autoId = { $lt: parseInt(before as string, 10) };
+        const message = await sendMessageService(
+            channelId,
+            req.user._id,
+            { content, attachments, replyTo }
+        );
+
+        // Broadcast via Socket.IO
+        const io = req.app.get('io');
+        if (io) {
+            io.to(`channel:${channelId}`).emit('message:sent', {
+                message,
+                sender: req.user.username
+            });
         }
 
-        const messages = await messageModel.find(query)
-            .sort({ autoId: -1 })
-            .limit(parseInt(limit as string))
-            .populate('senderId', 'username avatar status')
-            .populate('replyTo')
+        res.status(201).json({
+            success: true,
+            data: { message },
+            message: 'Message sent successfully'
+        });
+    } catch (error) {
+        next(error);
+    }
+};
 
-        res.status(200).json({
-            status: "success",
-            data: messages.reverse()
+/**
+ * Get messages from channel with pagination
+ */
+export const getChannelMessages = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+        const { channelId } = req.params;
+        const { page = 1, limit = 50 } = req.query;
+
+        const result = await getMessages(channelId, req.user._id, {
+            skip: (Number(page) - 1) * Number(limit),
+            limit: Number(limit)
         });
 
+        res.status(200).json({
+            success: true,
+            data: result,
+            message: 'Messages retrieved successfully'
+        });
     } catch (error) {
-        return next(new AppError("server Errror while fetching messages", 500));
+        next(error);
     }
-}
+};
 
+/**
+ * Mark messages as read
+ */
 export const markAsRead = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         const { channelId } = req.params;
-        const { messageAutoId } = req.body;
-        const userId = req.user._id;
 
-        await channelModel.updateOne(
-            { 
-                _id: channelId,
-                'members.userId': userId 
-            },
-            {
-                $set: {
-                    'members.$.lastRead': messageAutoId,
-                    'members.$.unreadCount': 0
-                }
-            }
-        )
+        // Mark all messages as read
+        const result = await markMessagesAsRead(channelId, req.user._id, 0);
 
-        await messageModel.updateMany(
-            {
+        // Broadcast via Socket.IO
+        const io = req.app.get('io');
+        if (io) {
+            io.to(`channel:${channelId}`).emit('messages:read', {
                 channelId,
-                autoId: { $lte: messageAutoId },
-                readBy: { $ne: userId }
-            },
-            {
-                $addToSet: { readBy: userId }
-            }
-        )
+                userId: req.user._id
+            });
+        }
 
         res.status(200).json({
-            success: true
-        })
+            success: true,
+            data: result,
+            message: 'Messages marked as read'
+        });
     } catch (error) {
-        return next(new AppError("server Errror while arking message as read", 500));
+        next(error);
     }
-}
-
-export const sendMessage = async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    const { channelId } = req.params;
-    const { content, replyTo } = req.body;
-    const senderId = req.user._id;
-
-    // 1️⃣ Verify user is in channel
-    const channel = await channelModel.findOne({
-      _id: channelId,
-      'members.userId': senderId
-    });
-
-    if (!channel) {
-      return next(new AppError("Channel not found or access denied", 404));
-    }
-
-    // 2️⃣ Generate autoId (increment per channel)
-    const lastMessage = await messageModel
-      .findOne({ channelId })
-      .sort({ autoId: -1 })
-      .select('autoId');
-
-    const nextAutoId = lastMessage ? lastMessage.autoId + 1 : 1;
-
-    // 3️⃣ Create message
-    const message = await messageModel.create({
-      channelId,
-      senderId,
-      content,
-      autoId: nextAutoId,
-      replyTo: replyTo || null,
-      readBy: [senderId] // sender has read their own message
-    });
-
-    // 4️⃣ Update channel last message preview
-    await channelModel.updateOne(
-      { _id: channelId },
-      {
-        $set: {
-          lastMessageAt: {
-            content,
-            senderId,
-            sentAt: Date.now(),
-            autoId: nextAutoId 
-          }
-        }
-      }
-    );
-
-    // 5️⃣ Increment unread count for OTHER members
-    await channelModel.updateOne(
-      { _id: channelId },
-      {
-        $inc: {
-          'members.$[elem].unreadCount': 1
-        }
-      },
-      {
-        arrayFilters: [{ 'elem.userId': { $ne: senderId } }]
-      }
-    );
-
-    const populatedMessage = await message.populate('senderId', 'username avatar');
-
-    res.status(201).json({
-      success: true,
-      message: populatedMessage
-    });
-
-  } catch (error) {
-    return next(new AppError("Server error while sending message", 500));
-  }
 };
 
+/**
+ * Delete message
+ */
 export const deleteMessage = async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    const { messageId } = req.params;
-    const userId = req.user._id;
+    try {
+        const { channelId, messageId } = req.params;
 
-    const message = await messageModel.findOneAndUpdate(
-      { _id: messageId, senderId: userId },
-      { isDeleted: true, deletedAt: Date.now(), content: "" },
-      { new: true }
-    );
+        const result = await deleteMessageService(messageId, req.user._id);
 
-    if (!message) {
-      return next(new AppError("Message not found or not yours", 404));
+        // Broadcast via Socket.IO
+        const io = req.app.get('io');
+        if (io) {
+            io.to(`channel:${channelId}`).emit('message:deleted', {
+                channelId,
+                messageId,
+                deletedBy: req.user._id
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: result,
+            message: 'Message deleted successfully'
+        });
+    } catch (error) {
+        next(error);
     }
+};
 
-    res.status(200).json({ success: true });
+/**
+ * Edit message
+ */
+export const editMessage = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+        const { channelId, messageId } = req.params;
+        const { content } = req.body;
 
-  } catch (error) {
-    return next(new AppError("Server error while deleting message", 500));
-  }
+        const updatedMessage = await editMessageService(
+            messageId,
+            req.user._id,
+            content
+        );
+
+        if (!updatedMessage) {
+            return next(new AppError('Message not found', 404));
+        }
+
+        // Broadcast via Socket.IO
+        const io = req.app.get('io');
+        if (io) {
+            io.to(`channel:${channelId}`).emit('message:edited', {
+                channelId,
+                messageId,
+                content,
+                editedBy: req.user._id,
+                updatedAt: updatedMessage.updatedAt
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: { message: updatedMessage },
+            message: 'Message edited successfully'
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * React to message
+ */
+export const reactToMessage = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+        const { channelId, messageId } = req.params;
+        const { emoji } = req.body;
+
+        const updatedMessage = await reactToMessageService(
+            messageId,
+            req.user._id,
+            emoji
+        );
+
+        // Broadcast via Socket.IO
+        const io = req.app.get('io');
+        if (io) {
+            io.to(`channel:${channelId}`).emit('message:reaction-added', {
+                channelId,
+                messageId,
+                emoji,
+                userId: req.user._id
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: { message: updatedMessage },
+            message: 'Reaction added successfully'
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * Search messages in channel
+ */
+export const searchChannelMessages = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+        const { channelId } = req.params;
+        const { q, page = 1, limit = 50 } = req.query;
+
+        if (!q) {
+            return next(new AppError('Search query is required', 400));
+        }
+
+        const result = await searchMessages(channelId, req.user._id, String(q));
+
+        res.status(200).json({
+            success: true,
+            data: result,
+            message: 'Search completed successfully'
+        });
+    } catch (error) {
+        next(error);
+    }
 };

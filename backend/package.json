@@ -4,10 +4,11 @@
   "scripts": {
     "dev": "nodemon src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node --max-old-space-size=400 dist/server.js"
   },
   "dependencies": {
     "@socket.io/redis-adapter": "^8.3.0",
+    "axios": "^1.13.6",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -18,19 +19,25 @@
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.0.0",
     "mongoose": "^8.21.0",
+    "node-cron": "^4.2.1",
     "process": "^0.11.10",
     "redis": "^5.10.0",
     "socket.io": "^4.8.3",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "winston": "^3.19.0",
-    "zod": "^4.3.5"
-  },
-  "devDependencies": {
+    "zod": "^4.3.5",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.10.9",
     "@types/socket.io": "^3.0.1",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
+    "@vitest/ui": "^4.0.18",
+    "happy-dom": "^20.8.1",
     "nodemon": "^3.1.11",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
   }
 }

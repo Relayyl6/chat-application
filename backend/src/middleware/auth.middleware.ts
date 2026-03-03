@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import * as jwt from 'jsonwebtoken'
-import { JWT_SECRET } from '../config/env.config.js';
-import userModel from '../models/User.ts';
-import { AppError } from '../utils/AppError.ts';
+import { JWT_SECRET } from '../config/env.config';
+import userModel from '../models/User';
+import { AppError } from '../utils/AppError';
 
 export interface AuthRequest extends Request {
     user?: any
@@ -12,10 +12,10 @@ export const authMiddleware = async (req: AuthRequest, res: Response, next: Next
     try {
       let token;
 
-      let header = req.headers.authorization;
+      const header = req.headers.authorization;
 
-      if (header && header.startsWith("Bearer" )) {
-        token = header?.[0].replace("Bearer ", "")
+      if (header && header.startsWith("Bearer ")) {
+        token = header.substring(7); // Skip "Bearer " (7 characters)
       }
 
       if (!token && req.cookies) {
@@ -29,7 +29,10 @@ export const authMiddleware = async (req: AuthRequest, res: Response, next: Next
       }
 
       let decoded;
-      const secretKey = process.env.JWT_SECRET || 'your_secret_key';
+      const secretKey = process.env.JWT_SECRET;
+      if (!secretKey) {
+        return next(new AppError('JWT_SECRET environment variable is not set', 500));
+      }
       try {
         decoded = jwt.verify(token, secretKey) as { userId: string };
         // req.userId = decoded.id;
@@ -38,9 +41,7 @@ export const authMiddleware = async (req: AuthRequest, res: Response, next: Next
       }
 
       if (!decoded || !decoded.userId) {
-          res.status(401).json({
-            message: "Inavlid or expired token"
-          })
+          return next(new AppError("Invalid or expired token", 401));
         }
 
       let user = await userModel.findById(decoded.userId).select('-password') 

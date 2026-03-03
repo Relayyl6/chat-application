@@ -1,14 +1,10 @@
 import type { Metadata } from "next";
-// import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ContextProvider from "@/context/useContext";
 
 export const metadata: Metadata = {
   title: "WeChat",
   description: "Welcome to the We Chat chat application",
-  // icons: {
-  //     icon: '/icons/logo.svg'
-  //   }
 };
 
 export default function RootLayout({
@@ -18,10 +14,8 @@ export default function RootLayout({
 }>) {
   
   return (
-    <html lang="en">
-      <body
-        className={`antialiased`}
-      >
+    <html lang="en" suppressHydrationWarning>
+      <body className="antialiased">
         <ContextProvider>
           {children}
         </ContextProvider>

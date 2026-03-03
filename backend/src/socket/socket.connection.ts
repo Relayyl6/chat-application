@@ -1,13 +1,12 @@
-import redisClient from "../config/redis.ts";
-import channelModel from "../models/Channel.ts";
-import userModel from "../models/User.ts";
-import { handleMessage } from "./handlers/message.handler.ts";
-import { handleTyping } from "./handlers/typing.handler.ts";
-import { AuthSocket } from "./socket.manager.ts";
+import getRedisClient from "../config/redis";
+import channelModel from "../models/Channel";
+import userModel from "../models/User";
+import { handleMessage } from "./handlers/message.handler";
+import { handleTyping } from "./handlers/typing.handler";
+import { AuthSocket } from "./socket.manager";
 import { Server } from 'socket.io'
 
 export const getUserchannels = async (userId: string): Promise<string[]> => {
-    // Implementation here
     const channels = await channelModel.find({ 'members.userId': userId }).select('_id');
     return channels.map(channel => channel._id.toString());
 }
@@ -18,18 +17,17 @@ export const Connection = async (socket: AuthSocket, io: Server) => {
         "User ID:", socket.userId
     );
 
+    const redisClient = getRedisClient(); // 👈 call it here to get the actual client
+
     await userModel.findByIdAndUpdate(socket.userId, { status: 'online' });
 
-    // store socket in redis for scaling
     await redisClient.hSet(`user: ${socket.userId}`, 'socketId', socket.id);
 
-    // join user's channel
     const userChannels = await getUserchannels(socket.userId!);
     userChannels.forEach((channelId: any) => {
         socket.join(`channel:${channelId}`);
     })
 
-    // emit online status to friends
     userChannels.forEach(channelId => {
         socket.to(`channel:${channelId}`).emit("user:status", {
             userId: socket.userId,
@@ -38,9 +36,8 @@ export const Connection = async (socket: AuthSocket, io: Server) => {
     });
 
     const messageTimestamps = new Map<string, number>();
-    // message handler
+
     socket.on('message:send', (data) => {
-        
         handleMessage(io, socket, data);
     });
 
@@ -48,7 +45,7 @@ export const Connection = async (socket: AuthSocket, io: Server) => {
         try {
             const now = Date.now();
             const last = messageTimestamps.get(socket.userId!) || 0;
-            if (now - last < 300) return; // 0.3s spam protection
+            if (now - last < 300) return;
             messageTimestamps.set(socket.userId!, now);
             const msg = await handleMessage(io, socket, data);
             callback({ status: "ok", messageId: (msg as any)?._id});
@@ -56,15 +53,14 @@ export const Connection = async (socket: AuthSocket, io: Server) => {
             callback({ status: "error" });
         }
     });
+
     socket.on('message:typing', (data) => handleTyping(io, socket, data));
 
-    // presence handlers
     socket.on('channel:join', async (data) => socket.join(`channel:${data.channelId}`));
 
-    // Handle user leaving channel
     socket.on('channel:leave', async (data) => {
-      const { channelId } = data;
-      socket.leave(`channel:${channelId}`);
+        const { channelId } = data;
+        socket.leave(`channel:${channelId}`);
     });
 
     socket.on('disconnect', async () => {
@@ -78,5 +74,5 @@ export const Connection = async (socket: AuthSocket, io: Server) => {
                 status: "offline",
             });
         });
-    })
+    });
 }

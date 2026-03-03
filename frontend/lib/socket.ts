@@ -44,6 +44,57 @@ export const disconnectSocket = () => {
   }
 };
 
+// Socket Event Listeners (set up listeners in your components)
+export const socketEvents = {
+  // Channel Events
+  onChannelCreated: (callback: (data: any) => void) => {
+    if (socket) socket.on('channel:created', callback);
+  },
+  onChannelRenamed: (callback: (data: any) => void) => {
+    if (socket) socket.on('channel:renamed', callback);
+  },
+  onChannelMembersAdded: (callback: (data: any) => void) => {
+    if (socket) socket.on('channel:members-added', callback);
+  },
+  onChannelMemberRemoved: (callback: (data: any) => void) => {
+    if (socket) socket.on('channel:member-removed', callback);
+  },
+  onChannelMemberLeft: (callback: (data: any) => void) => {
+    if (socket) socket.on('channel:member-left', callback);
+  },
+  onChannelMemberRoleUpdated: (callback: (data: any) => void) => {
+    if (socket) socket.on('channel:member-role-updated', callback);
+  },
+
+  // Message Events
+  onMessageSent: (callback: (data: any) => void) => {
+    if (socket) socket.on('message:sent', callback);
+  },
+  onMessageEdited: (callback: (data: any) => void) => {
+    if (socket) socket.on('message:edited', callback);
+  },
+  onMessageDeleted: (callback: (data: any) => void) => {
+    if (socket) socket.on('message:deleted', callback);
+  },
+  onMessageReactionAdded: (callback: (data: any) => void) => {
+    if (socket) socket.on('message:reaction-added', callback);
+  },
+  onMessagesRead: (callback: (data: any) => void) => {
+    if (socket) socket.on('messages:read', callback);
+  },
+
+  // User Events
+  onUserStatus: (callback: (data: any) => void) => {
+    if (socket) socket.on('user:status', callback);
+  },
+  onUserOnline: (callback: (data: any) => void) => {
+    if (socket) socket.on('user:online', callback);
+  },
+  onUserOffline: (callback: (data: any) => void) => {
+    if (socket) socket.on('user:offline', callback);
+  }
+};
+
 // Socket actions
 export const socketActions = {
   sendMessage(channelId: string, content: string, replyTo?: string) {
@@ -75,5 +126,38 @@ export const socketActions = {
 
   leaveChannel(channelId: string) {
     socket?.emit('channel:leave', { channelId });
+  },
+
+  // New socket actions based on backend broadcasts
+  editMessage(channelId: string, messageId: string, content: string) {
+    socket?.emit('message:edit', { channelId, messageId, content });
+  },
+
+  deleteMessage(channelId: string, messageId: string) {
+    socket?.emit('message:delete', { channelId, messageId });
+  },
+
+  reactToMessage(channelId: string, messageId: string, emoji: string) {
+    socket?.emit('message:react', { channelId, messageId, emoji });
+  },
+
+  renameChannel(channelId: string, name: string) {
+    socket?.emit('channel:rename', { channelId, name });
+  },
+
+  addMembers(channelId: string, userIds: string[]) {
+    socket?.emit('channel:add-members', { channelId, userIds });
+  },
+
+  removeMember(channelId: string, memberId: string) {
+    socket?.emit('channel:remove-member', { channelId, memberId });
+  },
+
+  updateMemberRole(channelId: string, memberId: string, role: string) {
+    socket?.emit('channel:update-role', { channelId, memberId, role });
+  },
+
+  changeStatus(status: 'online' | 'offline' | 'away') {
+    socket?.emit('user:status-change', { status });
   }
 };

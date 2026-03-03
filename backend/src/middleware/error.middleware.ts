@@ -51,7 +51,9 @@ const errorMiddleware = (err: any, req: Request, res: Response, next: NextFuncti
         // Type errors
         else if (err instanceof TypeError) {
             statusCode = 500;
-            message = "Internal server error (TypeError)";
+            message = process.env.NODE_ENV === 'development' 
+                ? `TypeError: ${err.message}` 
+                : "Internal server error (TypeError)";
         }
 
         // Axios or fetch request errors

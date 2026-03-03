@@ -1,7 +1,7 @@
-import { JWT_SECRET } from "../config/env.config.ts";
-import userModel from "../models/User.ts";
-import { AppError } from "../utils/AppError.ts";
-import { AuthSocket } from "./socket.manager.ts";
+import { JWT_SECRET } from "../config/env.config";
+import userModel from "../models/User";
+import { AppError } from "../utils/AppError";
+import { AuthSocket } from "./socket.manager";
 import * as jwt from 'jsonwebtoken'
 
 export const SocketMiddleware = async (socket: AuthSocket, next: any) => {

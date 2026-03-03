@@ -6,7 +6,6 @@ import ChatBubble from '@/components/ChatBubble'
 import InputSection from '@/components/InputSection'
 import { useParams } from 'next/navigation'
 import { useAppContext } from '@/context/useContext'
-import { useSocketContext } from '@/context/SocketContext'
 import { useMessages } from '@/hooks/useMessages'
 import { socketActions } from '@/lib/socket'
 import { DNA } from 'react-loader-spinner'
@@ -14,6 +13,7 @@ import { DNA } from 'react-loader-spinner'
 const Page = () => {
   const params = useParams();
   const chatId = params.id as string;
+  const [searchResults, setSearchResults] = useState<typeof socketMessages>([]);
 
   const {
     messagesByChat,
@@ -24,77 +24,107 @@ const Page = () => {
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
-  // ─── Detect whether this ID belongs to a channel or a DM ─────────────────
-  const channel = channels.find(c => c._id === chatId);
-  const isChannel = Boolean(channel);
-  const person = !isChannel ? people.byId[chatId] : undefined;
-
-  // ─── Channel: use socket-backed useMessages hook ──────────────────────────
-  const {
-    messages: socketMessages,
-    loading: socketLoading,
-    sendMessage: _sendMessage, // not used directly — InputSection calls socketActions
-  } = useMessages(isChannel ? chatId : null);
-
-  // ─── DM: use existing context messages ────────────────────────────────────
-  const dmMessages = useMemo(
-    () => messagesByChat[chatId] ?? [],
-    [messagesByChat, chatId]
-  );
-
-  // Join socket channel room when navigating to a channel
-  useEffect(() => {
-    if (isChannel) {
-      socketActions.joinChannel(chatId);
-    }
-  }, [isChannel, chatId]);
-
-  // Scroll to bottom on any new message
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [socketMessages, dmMessages]);
-
-  // ─── Loading / not-found guards ────────────────────────────────────────────
-  if (!isChannel && !person) {
-    return (
-      <div className="flex items-center justify-center w-full h-full">
-        <DNA
-          height={80}
-          width={80}
-          wrapperStyle={{}}
-          wrapperClass="dna-wrapper"
-          visible={true}
-          ariaLabel='dna-loading'
-        />
-      </div>
-    );
-  }
-
-  // ─── Derive header info ────────────────────────────────────────────────────
   const currentUserId =
     typeof window !== 'undefined'
       ? JSON.parse(localStorage.getItem('user') || '{}').id
       : '';
 
-  const title = isChannel
-    ? channel!.name ??
-      channel!.users
-        .filter(u => u.userId.id !== currentUserId)
-        .map(u => u.userId.username)
-        .join(', ') ??
-      'Chat'
-    : person!.title;
+  // ─── Detect channel type ──────────────────────────────────────────────────
+  const channel = channels.find(c => c._id === chatId);
+  const isChannel = Boolean(channel);
+  const isGroup = channel?.type === 'group';
+  const isDirect = channel?.type === 'direct';
+  const person = !isChannel ? people.byId[chatId] : undefined;
 
-  const subTitle = isChannel
-    ? channel!.type === 'group' ? 'Group' : 'Direct Message'
-    : person!.firstLine;
+  // ─── Socket-backed messages ───────────────────────────────────────────────
+  const {
+    messages: socketMessages,
+    loading: socketLoading,
+    sendMessage,
+    searchMessages,
+    editMessage,
+    deleteMessage,
+    reactToMessage,
+  } = useMessages(isChannel ? chatId : null);
 
-  // ─── Alias colour map for DM bubbles ──────────────────────────────────────
-  const aliasBgMap: Record<user, string> = {
+  // ─── DM messages from context ─────────────────────────────────────────────
+  const dmMessages = useMemo(
+    () => messagesByChat[chatId] ?? [],
+    [messagesByChat, chatId]
+  );
+
+  useEffect(() => {
+    if (isChannel) socketActions.joinChannel(chatId);
+  }, [isChannel, chatId]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [socketMessages, dmMessages]);
+
+  // ─── Loading guard ────────────────────────────────────────────────────────
+  if (!isChannel && !person) {
+    return (
+      <div className="flex items-center justify-center w-full h-full">
+        <DNA height={80} width={80} visible ariaLabel='dna-loading' wrapperStyle={{}} wrapperClass="" />
+      </div>
+    );
+  }
+
+  // ─── Derive header info ────────────────────────────────────────────────────
+  const getTitle = () => {
+    if (!isChannel) return person!.title;
+
+    // Named group channel
+    if (isGroup && channel!.name) return channel!.name;
+
+    // Direct channel — show the other person's name
+    if (isDirect) {
+      const other = channel!.users.find(u => u.userId.id !== currentUserId);
+      return other?.userId.username ?? 'Direct Message';
+    }
+
+    // Fallback: comma-separated member names
+    return channel!.users
+      .filter(u => u.userId.id !== currentUserId)
+      .map(u => u.userId.username)
+      .join(', ') || 'Chat';
+  };
+
+  const getSubTitle = () => {
+    if (!isChannel) return person!.firstLine;
+
+    if (isGroup) {
+      const memberCount = channel!.users.length;
+      return `${memberCount} member${memberCount !== 1 ? 's' : ''}`;
+    }
+
+    if (isDirect) {
+      const other = channel!.users.find(u => u.userId.id !== currentUserId);
+      return other?.userId.status ?? 'offline';
+    }
+
+    return '';
+  };
+
+  const title = getTitle();
+  const subTitle = getSubTitle();
+
+  // ─── Colour map ───────────────────────────────────────────────────────────
+  const aliasBgMap: Record<string, string> = {
     you: 'bg-violet-500',
     ai: 'bg-purple-500',
     me: 'bg-green-500',
   };
+
+  // ─── Per-sender colour for group chats ────────────────────────────────────
+  const senderColors = ['bg-violet-500', 'bg-blue-500', 'bg-pink-500', 'bg-orange-500', 'bg-teal-500'];
+  const senderColorMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    channel?.users.forEach((u, i) => {
+      map[u.userId.id] = senderColors[i % senderColors.length];
+    });
+    return map;
+  }, [channel]);
 
   return (
     <div className="flex flex-col p-2 gap-2 w-full h-full max-md:hidden rounded-xl">
@@ -102,50 +132,106 @@ const Page = () => {
         title={title}
         subTitle={subTitle}
         id={chatId}
+        isChannel={isChannel}
+        onSearch={async (query) => {
+          if (isChannel && searchMessages) {
+            try {
+              const results = await searchMessages(query);
+              setSearchResults(results);
+            } catch (error) {
+              console.error('Search failed:', error);
+            }
+          }
+        }}
       />
 
       <div className="flex-1 min-h-0 h-full relative rounded-xl">
         <div className='w-full h-full gap-1 flex flex-col relative bg-bg-main pt-2 rounded-xl'>
 
-          {/* ─── Message list ──────────────────────────────────────────────── */}
           <div className="overflow-y-auto no-scrollbar gap-2 flex-1 px-2">
 
-            {/* Channel messages — from socket */}
+            {searchResults.length > 0 && (
+              <div className='bg-blue-100 text-blue-900 rounded p-3 mb-4 text-sm'>
+                🔍 Found {searchResults.length} results. Clear search to see all messages.
+              </div>
+            )}
+
+            {/* ─── Channel (group or direct) messages ──────────────────── */}
             {isChannel && (
               <>
-                {socketLoading && (
+                {socketLoading && !searchResults.length && (
                   <div className="flex justify-center py-4">
                     <DNA height={40} width={40} visible ariaLabel='dna-loading' wrapperStyle={{}} wrapperClass="" />
                   </div>
                 )}
-                {socketMessages.map((msg) => {
+
+                {(searchResults.length > 0 ? searchResults : socketMessages).map((msg) => {
                   const isMe = msg.senderId.id === currentUserId;
+                  const bubbleColor = isMe
+                    ? 'bg-green-500'
+                    : isGroup
+                      ? senderColorMap[msg.senderId.id] ?? 'bg-violet-500'
+                      : 'bg-violet-500';
+
                   return (
                     <div
                       key={msg._id || msg.tempId}
-                      className={`flex w-full px-2 mb-1 ${isMe ? 'justify-start' : 'justify-end'}`}
+                      className={`flex w-full px-2 mb-1 ${isMe ? 'justify-end' : 'justify-start'}`}
                     >
-                      <ChatBubble
-                        message={msg.content}
-                        timestamp={msg.createdAt as unknown as Date}
-                        className={isMe ? 'bg-green-500' : 'bg-violet-500'}
-                      />
+                      {/* Show avatar/name for group messages from others */}
+                      {isGroup && !isMe && (
+                        <div className="flex flex-col items-center mr-2 mt-1">
+                          <div className="w-7 h-7 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs font-bold">
+                            {msg.senderId.username?.[0]?.toUpperCase() ?? '?'}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex flex-col max-w-[70%]">
+                        {/* Sender name for group messages */}
+                        {isGroup && !isMe && (
+                          <span className="text-xs text-gray-400 mb-0.5 ml-1">
+                            {msg.senderId.username}
+                          </span>
+                        )}
+                        <ChatBubble
+                          messageId={msg._id}
+                          message={msg.content}
+                          timestamp={msg.createdAt as unknown as Date}
+                          className={bubbleColor}
+                          isOwn={isMe}
+                          channelId={chatId}
+                          onEdit={async (content) => {
+                            try { if (editMessage) await editMessage(msg._id, content); }
+                            catch (e) { console.error('Edit failed:', e); }
+                          }}
+                          onDelete={async () => {
+                            try { if (deleteMessage) await deleteMessage(msg._id); }
+                            catch (e) { console.error('Delete failed:', e); }
+                          }}
+                          onReact={async (emoji) => {
+                            try { if (reactToMessage) await reactToMessage(msg._id, emoji); }
+                            catch (e) { console.error('React failed:', e); }
+                          }}
+                          reactions={msg.reactions}
+                        />
+                      </div>
                     </div>
                   );
                 })}
               </>
             )}
 
-            {/* DM messages — from context */}
+            {/* ─── Legacy DM messages from context ─────────────────────── */}
             {!isChannel && dmMessages.map((t: MessageProps) => (
               <div
                 key={t.timestamp as string}
                 className={`flex w-full px-2 mb-1 ${t.alias === "me" ? "justify-start" : "justify-end"}`}
               >
                 <ChatBubble
-                  message={t.text}
+                  message={t.text || ''}
                   timestamp={t?.timestamp as unknown as Date}
-                  className={`${aliasBgMap[t.alias as user] ?? 'bg-white'}`}
+                  className={`${aliasBgMap[t.alias as string] ?? 'bg-white'}`}
                 />
               </div>
             ))}
@@ -153,7 +239,6 @@ const Page = () => {
             <div ref={bottomRef} />
           </div>
 
-          {/* ─── Input ─────────────────────────────────────────────────────── */}
           <InputSection
             message={dmMessages}
             setMessage={(updater: unknown) =>
@@ -166,6 +251,7 @@ const Page = () => {
             }
             activePersonId={chatId}
             isChannel={isChannel}
+            sendMessage={isChannel ? sendMessage : undefined}
           />
         </div>
       </div>

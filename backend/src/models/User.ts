@@ -1,6 +1,6 @@
 import { model, Schema, HydratedDocument, Model } from "mongoose";
 import bcrypt from 'bcryptjs'
-import { IUser, IUserMethods } from "../types/index.ts";
+import { IUser, IUserMethods } from "../types/index";
 
 type UserModel = Model<IUser, {}, IUserMethods>;
 export type UserDocument = HydratedDocument<IUser, IUserMethods>;
@@ -45,11 +45,17 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>({
 
 userSchema.pre('save', async function(this: any, next: any) {
     if (!this.isModified('password')) return next()
-    if (!this.isModified('avatar')) return next()
 
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
-    this.avatar = `https://ui-avatars.com/api/?name=${this.username}&background=random&size=128`
+    next();
+})
+
+// Set avatar separately - after password hashing
+userSchema.pre('save', async function(this: any, next: any) {
+    if (!this.avatar && this.isModified('username')) {
+        this.avatar = `https://ui-avatars.com/api/?name=${this.username}&background=random&size=128`
+    }
     next();
 })
 

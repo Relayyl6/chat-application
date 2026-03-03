@@ -5,6 +5,7 @@ import { initialPeople, normalizePeople } from '@/utils/names';
 import React, { createContext, useState, useContext, useEffect } from 'react'
 import { SocketProvider, useSocketContext } from './SocketContext';
 import { api } from '@/lib/api';
+import { useChannels } from '@/hooks/useChannels';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -14,55 +15,9 @@ const AppContextInner = ({ children }: { children: React.ReactNode }) => {
   const [aiChatMessage, setAiChatMessage] = useState<boolean>(false);
   const [people, setPeople] = usePersistentState<PeopleState>('people', normalizePeople(initialPeople));
 
-  // --- Channel state ---
-  const [channels, setChannels] = useState<Channel[]>([]);
-  const [channelsLoading, setChannelsLoading] = useState(false);
+  // --- Channel state using the hook ---
+  const { channels, loading: channelsLoading } = useChannels();
   const [activeChannelId, setActiveChannelId] = useState<string | null>(null);
-
-  const { onNewMessage } = useSocketContext();
-
-  // Load channels on mount
-  useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (!token) return; // Not logged in yet — skip silently
-
-    const loadChannels = async () => {
-      setChannelsLoading(true);
-      try {
-        const data = await api.getChannels();
-        setChannels(data);
-      } catch (error) {
-        console.error('Failed to load channels:', error);
-      } finally {
-        setChannelsLoading(false);
-      }
-    };
-
-    loadChannels();
-  }, []);
-
-  // Keep channel lastMessage preview in sync with incoming socket messages
-  useEffect(() => {
-    const unsubscribe = onNewMessage((message) => {
-      setChannels((prev) =>
-        prev.map((channel) =>
-          channel._id === message.channelId
-            ? {
-                ...channel,
-                lastMessage: {
-                  content: message.content,
-                  senderId: message.senderId,
-                  sentAt: message.createdAt,
-                  autoId: message.autoId,
-                },
-              }
-            : channel
-        )
-      );
-    });
-
-    return unsubscribe;
-  }, [onNewMessage]);
 
   return (
     <AppContext.Provider value={{
@@ -73,7 +28,7 @@ const AppContextInner = ({ children }: { children: React.ReactNode }) => {
       people,
       setPeople,
       channels,
-      setChannels,
+      setChannels: () => {}, // No-op since useChannels manages its own state
       channelsLoading,
       activeChannelId,
       setActiveChannelId,

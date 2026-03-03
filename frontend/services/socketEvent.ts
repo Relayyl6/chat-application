@@ -3,13 +3,21 @@ import { getSocket } from './socket.js';
 
 // Global event handlers storage
 const eventHandlers = {
-  onNewMessage: [],
+  onMessageSent: [],
+  onMessageEdited: [],
+  onMessageDeleted: [],
+  onMessageReactionAdded: [],
+  onMessagesRead: [],
   onTyping: [],
   onUserStatus: [],
-  onMembersAdded: [],
-  onMemberRemoved: [],
-  onChannelAdded: [],
-  onChannelRemoved: []
+  onUserOnline: [],
+  onUserOffline: [],
+  onChannelCreated: [],
+  onChannelRenamed: [],
+  onChannelMembersAdded: [],
+  onChannelMemberRemoved: [],
+  onChannelMemberLeft: [],
+  onChannelMemberRoleUpdated: []
 };
 
 // Setup all socket event listeners
@@ -19,20 +27,29 @@ export const setupSocketListeners = () => {
 
   // ===== MESSAGE EVENTS =====
   
-  socket.on('message:new', (message: any) => {
+  socket.on('message:sent', (message: any) => {
     console.log('📩 New message:', message);
-    
-    // Call all registered handlers
-    eventHandlers.onNewMessage.forEach(handler => handler(message));
+    eventHandlers.onMessageSent.forEach(handler => handler(message));
   });
 
-  socket.on('message:sent', ({ tempId, message }: ) => {
-    console.log('✅ Message sent confirmation:', tempId);
-    
-    // Update the optimistic message with real data
-    window.dispatchEvent(new CustomEvent('message-sent', { 
-      detail: { tempId, message } 
-    }));
+  socket.on('message:edited', (data: any) => {
+    console.log('✏️ Message edited:', data);
+    eventHandlers.onMessageEdited.forEach(handler => handler(data));
+  });
+
+  socket.on('message:deleted', (data: any) => {
+    console.log('🗑️ Message deleted:', data);
+    eventHandlers.onMessageDeleted.forEach(handler => handler(data));
+  });
+
+  socket.on('message:reaction-added', (data: any) => {
+    console.log('👍 Reaction added:', data);
+    eventHandlers.onMessageReactionAdded.forEach(handler => handler(data));
+  });
+
+  socket.on('messages:read', (data: any) => {
+    console.log('✅ Messages read:', data);
+    eventHandlers.onMessagesRead.forEach(handler => handler(data));
   });
 
   // ===== TYPING EVENTS =====
@@ -49,26 +66,46 @@ export const setupSocketListeners = () => {
     eventHandlers.onUserStatus.forEach(handler => handler(data));
   });
 
-  // ===== CHANNEL MEMBER EVENTS =====
+  socket.on('user:online', (data) => {
+    console.log('🟢 User online:', data);
+    eventHandlers.onUserOnline.forEach(handler => handler(data));
+  });
+
+  socket.on('user:offline', (data) => {
+    console.log('⚫ User offline:', data);
+    eventHandlers.onUserOffline.forEach(handler => handler(data));
+  });
+
+  // ===== CHANNEL EVENTS =====
   
-  socket.on('channel:members:added', (data) => {
+  socket.on('channel:created', (data) => {
+    console.log('🆕 Channel created:', data);
+    eventHandlers.onChannelCreated.forEach(handler => handler(data));
+  });
+
+  socket.on('channel:renamed', (data) => {
+    console.log('📝 Channel renamed:', data);
+    eventHandlers.onChannelRenamed.forEach(handler => handler(data));
+  });
+
+  socket.on('channel:members-added', (data) => {
     console.log('➕ Members added:', data);
-    eventHandlers.onMembersAdded.forEach(handler => handler(data));
+    eventHandlers.onChannelMembersAdded.forEach(handler => handler(data));
   });
 
-  socket.on('channel:member:removed', (data) => {
+  socket.on('channel:member-removed', (data) => {
     console.log('➖ Member removed:', data);
-    eventHandlers.onMemberRemoved.forEach(handler => handler(data));
+    eventHandlers.onChannelMemberRemoved.forEach(handler => handler(data));
   });
 
-  socket.on('channel:added', (data) => {
-    console.log('🆕 You were added to channel:', data);
-    eventHandlers.onChannelAdded.forEach(handler => handler(data));
+  socket.on('channel:member-left', (data) => {
+    console.log('👋 Member left:', data);
+    eventHandlers.onChannelMemberLeft.forEach(handler => handler(data));
   });
 
-  socket.on('channel:removed', (data) => {
-    console.log('🗑️ You were removed from channel:', data);
-    eventHandlers.onChannelRemoved.forEach(handler => handler(data));
+  socket.on('channel:member-role-updated', (data) => {
+    console.log('⚙️ Member role updated:', data);
+    eventHandlers.onChannelMemberRoleUpdated.forEach(handler => handler(data));
   });
 
   // ===== ERROR EVENTS =====
@@ -80,12 +117,39 @@ export const setupSocketListeners = () => {
 };
 
 
-// Register event handlers
-export const onNewMessage = (handler) => {
-  eventHandlers.onNewMessage.push(handler);
-  // Return cleanup function
+// Register event handlers - New API
+export const onMessageSent = (handler) => {
+  eventHandlers.onMessageSent.push(handler);
   return () => {
-    eventHandlers.onNewMessage = eventHandlers.onNewMessage.filter(h => h !== handler);
+    eventHandlers.onMessageSent = eventHandlers.onMessageSent.filter(h => h !== handler);
+  };
+};
+
+export const onMessageEdited = (handler) => {
+  eventHandlers.onMessageEdited.push(handler);
+  return () => {
+    eventHandlers.onMessageEdited = eventHandlers.onMessageEdited.filter(h => h !== handler);
+  };
+};
+
+export const onMessageDeleted = (handler) => {
+  eventHandlers.onMessageDeleted.push(handler);
+  return () => {
+    eventHandlers.onMessageDeleted = eventHandlers.onMessageDeleted.filter(h => h !== handler);
+  };
+};
+
+export const onMessageReactionAdded = (handler) => {
+  eventHandlers.onMessageReactionAdded.push(handler);
+  return () => {
+    eventHandlers.onMessageReactionAdded = eventHandlers.onMessageReactionAdded.filter(h => h !== handler);
+  };
+};
+
+export const onMessagesRead = (handler) => {
+  eventHandlers.onMessagesRead.push(handler);
+  return () => {
+    eventHandlers.onMessagesRead = eventHandlers.onMessagesRead.filter(h => h !== handler);
   };
 };
 
@@ -103,30 +167,58 @@ export const onUserStatus = (handler) => {
   };
 };
 
-export const onMembersAdded = (handler) => {
-  eventHandlers.onMembersAdded.push(handler);
+export const onUserOnline = (handler) => {
+  eventHandlers.onUserOnline.push(handler);
   return () => {
-    eventHandlers.onMembersAdded = eventHandlers.onMembersAdded.filter(h => h !== handler);
+    eventHandlers.onUserOnline = eventHandlers.onUserOnline.filter(h => h !== handler);
   };
 };
 
-export const onMemberRemoved = (handler) => {
-  eventHandlers.onMemberRemoved.push(handler);
+export const onUserOffline = (handler) => {
+  eventHandlers.onUserOffline.push(handler);
   return () => {
-    eventHandlers.onMemberRemoved = eventHandlers.onMemberRemoved.filter(h => h !== handler);
+    eventHandlers.onUserOffline = eventHandlers.onUserOffline.filter(h => h !== handler);
   };
 };
 
-export const onChannelAdded = (handler) => {
-  eventHandlers.onChannelAdded.push(handler);
+export const onChannelCreated = (handler) => {
+  eventHandlers.onChannelCreated.push(handler);
   return () => {
-    eventHandlers.onChannelAdded = eventHandlers.onChannelAdded.filter(h => h !== handler);
+    eventHandlers.onChannelCreated = eventHandlers.onChannelCreated.filter(h => h !== handler);
   };
 };
 
-export const onChannelRemoved = (handler) => {
-  eventHandlers.onChannelRemoved.push(handler);
+export const onChannelRenamed = (handler) => {
+  eventHandlers.onChannelRenamed.push(handler);
   return () => {
-    eventHandlers.onChannelRemoved = eventHandlers.onChannelRemoved.filter(h => h !== handler);
+    eventHandlers.onChannelRenamed = eventHandlers.onChannelRenamed.filter(h => h !== handler);
+  };
+};
+
+export const onChannelMembersAdded = (handler) => {
+  eventHandlers.onChannelMembersAdded.push(handler);
+  return () => {
+    eventHandlers.onChannelMembersAdded = eventHandlers.onChannelMembersAdded.filter(h => h !== handler);
+  };
+};
+
+export const onChannelMemberRemoved = (handler) => {
+  eventHandlers.onChannelMemberRemoved.push(handler);
+  return () => {
+    eventHandlers.onChannelMemberRemoved = eventHandlers.onChannelMemberRemoved.filter(h => h !== handler);
+  };
+};
+
+export const onChannelMemberLeft = (handler) => {
+  eventHandlers.onChannelMemberLeft.push(handler);
+  return () => {
+    eventHandlers.onChannelMemberLeft = eventHandlers.onChannelMemberLeft.filter(h => h !== handler);
+  };
+};
+
+export const onChannelMemberRoleUpdated = (handler) => {
+  eventHandlers.onChannelMemberRoleUpdated.push(handler);
+  return () => {
+    eventHandlers.onChannelMemberRoleUpdated = eventHandlers.onChannelMemberRoleUpdated.filter(h => h !== handler);
   };
 };

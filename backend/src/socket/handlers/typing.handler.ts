@@ -1,5 +1,5 @@
 import { Server } from 'socket.io';
-import { AuthSocket } from '../socket.manager.ts';
+import { AuthSocket } from '../socket.manager';
 
 export const handleTyping = async (io: Server, socket: AuthSocket, data: any) => {
   const { channelId, isTyping } = data;
