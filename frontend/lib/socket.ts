@@ -11,7 +11,8 @@ export const connectSocket = (token: string): Socket => {
     auth: { token },
     reconnection: true,
     reconnectionAttempts: 5,
-    reconnectionDelay: 1000
+    reconnectionDelay: 1000,
+    withCredentials: true,
   });
 
   socket.on('connect', () => {
@@ -97,21 +98,20 @@ export const socketEvents = {
 
 // Socket actions
 export const socketActions = {
-  sendMessage(channelId: string, content: string, replyTo?: string) {
+  sendMessage(channelId: string, content: string, attachments?: any[], replyTo?: string) {
     if (!socket) return null;
-    
     const tempId = Date.now();
     socket.emit('message:send', {
-      channelId,
-      content,
-      type: 'text',
-      replyTo,
-      tempId
+        channelId,
+        content,
+        type: attachments?.length ? 'file' : 'text',
+        attachments: attachments || [],
+        replyTo,
+        tempId
     });
-    
     return tempId;
   },
-
+  
   sendTypingStart(channelId: string) {
     socket?.emit('message:typing', { channelId, isTyping: true });
   },

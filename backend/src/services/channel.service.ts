@@ -22,44 +22,38 @@ export const createChannel = async (userId: string, payload: CreateChannelPayloa
     try {
         const { name, type, avatar, userIds, description } = payload;
 
-        // For direct messages, check if channel already exists
         if (type === 'direct') {
             if (userIds.length !== 1) {
-                throw new AppError("Direct channels must have exactly one other user", 400);
+                throw new AppError("Direct messages must have exactly one other user", 400);
             }
 
+            // ✅ Return existing DM if already exists
             const existingChannel = await channelModel.findOne({
                 type: 'direct',
-                'members.userId': { $all: [userId, userIds[0]] }
+                'members.userId': { $all: [userId, userIds[0]] },
+                $expr: { $eq: [{ $size: '$members' }, 2] } // ✅ ensure exactly 2 members
             }).populate('members.userId', 'username email avatar status');
 
-            if (existingChannel) {
-                return existingChannel;
-            }
+            if (existingChannel) return existingChannel;
         }
 
-        // Validate users exist
+        // Validate all users exist
+        const allUserIds = [userId, ...userIds];
         const users = await userModel.find({ _id: { $in: userIds } });
         if (users.length !== userIds.length) {
             throw new AppError("One or more users not found", 400);
         }
 
-        // Create channel
         const channel = await channelModel.create({
             name: type === 'direct' ? null : name,
             type,
-            avatar,
-            description,
+            // null avatar for DMs — frontend derives it from the other person's avatar
+            avatar: type === 'direct' ? null : avatar,
+            description: type === 'direct' ? null : description,
             createdBy: userId,
             members: [
-                {
-                    userId,
-                    role: 'admin'
-                },
-                ...userIds.map((id) => ({
-                    userId: id,
-                    role: 'member'
-                }))
+                { userId, role: 'admin' },
+                ...userIds.map((id) => ({ userId: id, role: 'member' }))
             ]
         });
 

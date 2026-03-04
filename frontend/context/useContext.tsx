@@ -3,21 +3,51 @@
 import { usePersistentState } from '@/hooks/usePersistentState';
 import { initialPeople, normalizePeople } from '@/utils/names';
 import React, { createContext, useState, useContext, useEffect } from 'react'
-import { SocketProvider, useSocketContext } from './SocketContext';
+import { SocketProvider } from './SocketContext';
 import { api } from '@/lib/api';
 import { useChannels } from '@/hooks/useChannels';
+import { useRouter } from 'next/navigation';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
-// Inner provider — sits inside SocketProvider so it can consume socket context
 const AppContextInner = ({ children }: { children: React.ReactNode }) => {
+  const router = useRouter();
   const [messagesByChat, setMessagesByChat] = usePersistentState<Record<string, MessageProps[]>>("messagesByChat", {});
   const [aiChatMessage, setAiChatMessage] = useState<boolean>(false);
   const [people, setPeople] = usePersistentState<PeopleState>('people', normalizePeople(initialPeople));
+  const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<any | null>(null);
 
-  // --- Channel state using the hook ---
   const { channels, loading: channelsLoading } = useChannels();
   const [activeChannelId, setActiveChannelId] = useState<string | null>(null);
+
+  // On mount: load token/user from localStorage, redirect to /log-in if missing
+  useEffect(() => {
+    const savedToken = localStorage.getItem('token');
+    const savedUser = localStorage.getItem('user');
+    if (savedToken && savedUser) {
+      setToken(savedToken);
+      setUser(JSON.parse(savedUser));
+      window.dispatchEvent(new CustomEvent('app:login', { detail: { token: savedToken } }));
+    } else {
+      router.push('/sign-up');
+    }
+  }, []);
+
+  const login = (newToken: string, newUser: any) => {
+    localStorage.setItem('token', newToken);
+    localStorage.setItem('user', JSON.stringify(newUser));
+    setToken(newToken);
+    setUser(newUser);
+  };
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setToken(null);
+    setUser(null);
+    router.push('/log-in');
+  };
 
   return (
     <AppContext.Provider value={{
@@ -28,17 +58,20 @@ const AppContextInner = ({ children }: { children: React.ReactNode }) => {
       people,
       setPeople,
       channels,
-      setChannels: () => {}, // No-op since useChannels manages its own state
+      setChannels: () => {},
       channelsLoading,
       activeChannelId,
       setActiveChannelId,
+      token,
+      user,
+      login,
+      logout,
     }}>
       {children}
     </AppContext.Provider>
   );
 };
 
-// Outer provider — wraps SocketProvider so the inner can safely use useSocketContext
 export const ContextProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <SocketProvider>

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { nanoid } from 'nanoid/non-secure';
+import { useChannels } from "@/hooks/useChannels";
 
 const ContactForm = ({
     name,
@@ -19,19 +20,39 @@ const ContactForm = ({
 } : ContactProp) => {
   
   const [errors, setErrors] = useState<any>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAddingOpen, setIsAddingOpen] = useState(true);
+  const { createChannel } = useChannels();
 
   const addMemberInput = () => {
-    setMembers((prev) => [...prev, ""]);
+   if (!isAddingOpen) return; 
+
+   const newMember = {
+     id: nanoid(), // NEW unique ID every click
+     value: "",
+   }; 
+
+   setMembers((prev) => [...prev, newMember]);
   };
 
-  const updateMember = (index: number, value: string) => {
-    const updated = [...members];
-    updated[index] = value;
-    setMembers(updated);
+  const updateMember = (id: string, value: string) => {
+    setMembers((prev) =>
+      prev.map((member) =>
+        member.id === id ? { ...member, value } : member
+      )
+    );
   };
 
-  const removeMember = (index: number) => {
-    setMembers((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev));
+  const removeMember = (id: string) => {
+    setMembers((prev) => prev.filter((member) => member.id !== id));
+  };
+
+  const closeMembers = () => {
+    setIsAddingOpen(false);
+  };
+
+  const openMembers = () => {
+    setIsAddingOpen(true);
   };
 
   const validate = () => {
@@ -46,7 +67,7 @@ const ContactForm = ({
 
     if (mode === "group") {
       const emptyIndexes = members
-        .map((m, i) => (!m.trim() ? i : null))
+        .map((m, i) => (!m.value.trim() ? i : null))
         .filter((v) => v !== null);
 
       if (members.length === 0 || emptyIndexes.length === members.length) {
@@ -60,16 +81,52 @@ const ContactForm = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate()) return;
 
-    const payload =
-      mode === "dm"
-        ? { type: "dm", name, userId, extraInfo }
-        : { type: "group", name, extraInfo, members };
+    setIsSubmitting(true);
+    try {
+      let channel;
 
-    console.log("Submitting:", payload);
-    onClick()
+      if (mode === "dm") {
+        // For DM: create channel with single user on submit
+        channel = await createChannel(
+          "direct",
+          name,
+          [userId],
+          extraInfo
+        );
+        console.log("DM channel created successfully:", channel);
+      } else {
+        // For group: create channel with all members at once on submit
+        const validMembers = members
+          .map((m) => m.value.trim())
+          .filter((v) => v);
+        channel = await createChannel(
+          "group",
+          name,
+          validMembers,
+          extraInfo
+        );
+        console.log("Group channel created successfully:", channel);
+      }
+
+      onClick(channel._id);
+      
+      // Reset form
+      setName("");
+      setExtraInfo("");
+      setMembers([]);
+      setIsAddingOpen(true);
+      setUserId(nanoid());
+      setErrors({});
+      closeModal();
+    } catch (error) {
+      console.error("Failed to create channel:", error);
+      setErrors({ submit: "Failed to create channel. Please try again." });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   useEffect(() => {
@@ -152,8 +209,8 @@ const ContactForm = ({
             {members.map((member, index) => (
               <div key={index} className="flex gap-2 items-center">
                 <input
-                  value={member}
-                  onChange={(e) => updateMember(index, e.target.value)}
+                  value={member.value}
+                  onChange={(e) => updateMember(member.id, e.target.value)}
                   placeholder={`Member ${index + 1} ID`}
                   className={`no-scrollbar flex-1 bg-bg-input text-text-main border rounded-lg px-3 py-2 focus:outline-none ${
                     errors.memberFields?.includes(index)
@@ -161,37 +218,57 @@ const ContactForm = ({
                       : "border-border-subtle focus:border-brand-primary"
                   }`}
                 />
-                {
-                    member && <button
-                        type="button"
-                        onClick={() => removeMember(index)}
-                        className="text-red-400 hover:text-red-500 text-sm px-2"
-                        >
-                            ✕
-                        </button>
-                }
+                {member.value && (
+                  <button
+                    type="button"
+                    onClick={() => removeMember(member.id)}
+                    className="text-red-400 hover:text-red-500 text-sm px-2"
+                  >
+                    ✕
+                  </button>
+                )}
               </div>
             ))}
           </div>
 
           {errors.members && <p className="text-red-400 text-xs">{errors.members}</p>}
 
-          <button
-            type="button"
-            onClick={addMemberInput}
-            className="text-sm bg-bg-inner border border-border-subtle text-text-main py-2 rounded-lg hover:border-brand-primary"
-          >
-            + Add Member
-          </button>
+          <div className="flex gap-2">
+            {isAddingOpen && (
+              <button
+                type="button"
+                onClick={addMemberInput}
+                className="text-sm bg-bg-inner border border-border-subtle text-text-main py-2 px-3 rounded-lg hover:border-brand-primary"
+              >
+                + Add Member
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={closeMembers}
+              className="text-sm text-red-400 border border-red-400 px-3 py-2 rounded-lg"
+            >
+              Close Members
+            </button>
+          </div>
         </div>
       )}
+
+      {/* Submit Error */}
+      {errors.submit && <p className="text-red-400 text-xs text-center">{errors.submit}</p>}
 
       {/* Submit */}
       <button
         onClick={handleSubmit}
-        className="bg-black text-button-light-text py-2 rounded-lg hover:bg-button-light-hover mt-2"
+        disabled={isSubmitting}
+        className={`py-2 rounded-lg mt-2 ${
+          isSubmitting
+            ? "bg-gray-500 text-button-light-text cursor-not-allowed"
+            : "bg-black text-button-light-text hover:bg-button-light-hover"
+        }`}
       >
-        Create {mode === "dm" ? "Chat" : "Group"}
+        {isSubmitting ? "Creating..." : `Create ${mode === "dm" ? "Chat" : "Group"}`}
       </button>
 
       {/* Close */}

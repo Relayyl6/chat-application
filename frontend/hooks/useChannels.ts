@@ -7,77 +7,23 @@ import { useSocketContext } from '@/context/SocketContext';
 export const useChannels = () => {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [loading, setLoading] = useState(false);
-  const { onMessageSent, onChannelCreated, onChannelRenamed, onChannelMembersAdded, onChannelMemberRemoved } = useSocketContext();
+  const { onMessageSent, onChannelCreated, onChannelRenamed } = useSocketContext();
 
   useEffect(() => {
     console.log('[useChannels] Component mounted, loading channels');
     loadChannels();
   }, []);
 
-  // Update channel list when new messages arrive
-  useEffect(() => {
-    console.log('[useChannels] Setting up socket listeners');
-
-    const unsubscribeMessage = onMessageSent((message) => {
-      console.log('[useChannels] onMessageSent event received:', message);
-      setChannels((prev) => {
-        const updated = prev.map((channel) =>
-          channel._id === message.channelId
-            ? {
-                ...channel,
-                lastMessage: {
-                  content: message.content,
-                  senderId: message.senderId,
-                  sentAt: message.createdAt,
-                  _id: message._id
-                }
-              }
-            : channel
-        );
-        const channelUpdated = updated.find(ch => ch._id === message.channelId);
-        console.log(`[useChannels] Updated channel ${message.channelId} with last message`, channelUpdated?.lastMessage);
-        return updated;
-      });
-    });
-
-    const unsubscribeChannelCreated = onChannelCreated((channel) => {
-      console.log('[useChannels] onChannelCreated event received:', channel);
-      setChannels((prev) => {
-        const updated = [...prev, channel];
-        console.log(`[useChannels] New channel added, total channels: ${updated.length}`);
-        return updated;
-      });
-    });
-
-    const unsubscribeChannelRenamed = onChannelRenamed((data) => {
-      console.log('[useChannels] onChannelRenamed event received:', data);
-      setChannels((prev) => {
-        const updated = prev.map((ch) =>
-          ch._id === data.channelId ? { ...ch, name: data.name } : ch
-        );
-        console.log(`[useChannels] Channel ${data.channelId} renamed to "${data.name}"`);
-        return updated;
-      });
-    });
-
-    return () => {
-      console.log('[useChannels] Cleaning up socket listeners');
-      unsubscribeMessage();
-      unsubscribeChannelCreated();
-      unsubscribeChannelRenamed();
-    };
-  }, [onMessageSent, onChannelCreated, onChannelRenamed]);
-
   const loadChannels = async () => {
     console.log('[useChannels] Starting loadChannels');
     setLoading(true);
     try {
       console.log('[useChannels] Fetching channels from API');
-      const data = await api.getChannels();
-      console.log(`[useChannels] Loaded ${data.length} channels:`, data);
+      const { channels, count } = await api.getChannels();
+      console.log(`[useChannels] Loaded ${count} channels:`, channels);
       
       // If no channels, use dummy channels for testing
-      if (data.length === 0) {
+      if (count === 0) {
         console.log('[useChannels] No channels from API, using dummy channels');
         const dummyChannels: Channel[] = [
           {
@@ -86,20 +32,20 @@ export const useChannels = () => {
             type: 'group',
             avatar: '🌍',
             description: 'General discussion channel',
-            users: [
+            members: [
               {
-                userId: { id: 'user_1', username: 'john_doe', email: 'john@example.com', status: 'online' },
+                userId: { _id: 'user_1', username: 'john_doe', email: 'john@example.com', status: 'online' },
                 role: 'admin',
                 joinedAt: new Date().toISOString(),
                 lastRead: 0,
                 unreadCount: 0
               }
             ],
-            lastMessage: {
+            lastMessageAt: {
               content: 'Welcome to the general channel!',
-              senderId: { id: 'user_1', username: 'john_doe', email: 'john@example.com', status: 'online' },
-              sentAt: new Date().toISOString(),
-              _id: 'msg_1'
+              senderId: { _id: 'user_1', username: 'john_doe', email: 'john@example.com', status: 'online' },
+              sendAt: new Date().toISOString(),
+              autoId: 1
             },
             messageAutoId: 1,
             createdBy: 'user_1',
@@ -112,20 +58,20 @@ export const useChannels = () => {
             type: 'group',
             avatar: '🎲',
             description: 'Random fun discussions',
-            users: [
+            members: [
               {
-                userId: { id: 'user_1', username: 'john_doe', email: 'john@example.com', status: 'online' },
+                userId: { _id: 'user_1', username: 'john_doe', email: 'john@example.com', status: 'online' },
                 role: 'member',
                 joinedAt: new Date().toISOString(),
                 lastRead: 0,
                 unreadCount: 2
               }
             ],
-            lastMessage: {
+            lastMessageAt: {
               content: 'This is a random message 😄',
-              senderId: { id: 'user_2', username: 'jane_smith', email: 'jane@example.com', status: 'offline' },
-              sentAt: new Date().toISOString(),
-              _id: 'msg_2'
+              senderId: { _id: 'user_2', username: 'jane_smith', email: 'jane@example.com', status: 'offline' },
+              sendAt: new Date().toISOString(),
+              autoId: 2
             },
             messageAutoId: 5,
             createdBy: 'user_2',
@@ -136,27 +82,27 @@ export const useChannels = () => {
             _id: 'ch_3',
             name: 'John Doe',
             type: 'direct',
-            users: [
+            members: [
               {
-                userId: { id: 'user_1', username: 'john_doe', email: 'john@example.com', status: 'online' },
+                userId: { _id: 'user_1', username: 'john_doe', email: 'john@example.com', status: 'online' },
                 role: 'member',
                 joinedAt: new Date().toISOString(),
                 lastRead: 0,
                 unreadCount: 0
               },
               {
-                userId: { id: 'user_2', username: 'jane_smith', email: 'jane@example.com', status: 'offline' },
+                userId: { _id: 'user_2', username: 'jane_smith', email: 'jane@example.com', status: 'offline' },
                 role: 'member',
                 joinedAt: new Date().toISOString(),
                 lastRead: 0,
                 unreadCount: 0
               }
             ],
-            lastMessage: {
+            lastMessageAt: {
               content: 'Hey! How are you doing?',
-              senderId: { id: 'user_1', username: 'john_doe', email: 'john@example.com', status: 'online' },
-              sentAt: new Date().toISOString(),
-              _id: 'msg_3'
+              senderId: { _id: 'user_1', username: 'john_doe', email: 'john@example.com', status: 'online' },
+              sendAt: new Date().toISOString(),
+              autoId: 3
             },
             messageAutoId: 3,
             createdBy: 'user_1',
@@ -166,7 +112,7 @@ export const useChannels = () => {
         ];
         setChannels(dummyChannels);
       } else {
-        setChannels(data);
+        setChannels(channels);
       }
     } catch (error) {
       console.error('[useChannels] Failed to load channels:', error);
@@ -176,22 +122,23 @@ export const useChannels = () => {
           _id: 'ch_1',
           name: 'General',
           type: 'group',
-          avatar: '🌍',
+          avatar: 'https://ui-avatars.com/api/?name=General&background=random&size=128',
           description: 'General discussion channel',
-          users: [
+          members: [
             {
-              userId: { id: 'user_1', username: 'john_doe', email: 'john@example.com', status: 'online' },
+              _id: 'mem_1',
+              userId: { _id: 'user_1', username: 'john_doe', email: 'john@example.com', status: 'online', avatar: 'https://api.dicebear.com/9.x/adventurer/svg?seed=john_doe&size=128' },
               role: 'admin',
               joinedAt: new Date().toISOString(),
               lastRead: 0,
               unreadCount: 0
             }
           ],
-          lastMessage: {
+          lastMessageAt: {
             content: 'Welcome to the general channel!',
-            senderId: { id: 'user_1', username: 'john_doe', email: 'john@example.com', status: 'online' },
-            sentAt: new Date().toISOString(),
-            _id: 'msg_1'
+            senderId: { _id: 'user_1', username: 'john_doe', email: 'john@example.com', status: 'online' },
+            sendAt: new Date().toISOString(),
+            autoId: 1
           },
           messageAutoId: 1,
           createdBy: 'user_1',
@@ -202,25 +149,69 @@ export const useChannels = () => {
           _id: 'ch_2',
           name: 'Random',
           type: 'group',
-          avatar: '🎲',
+          avatar: 'https://ui-avatars.com/api/?name=Random&background=random&size=128',
           description: 'Random fun discussions',
-          users: [
+          members: [
             {
-              userId: { id: 'user_1', username: 'john_doe', email: 'john@example.com', status: 'online' },
+              _id: 'mem_2',
+              userId: { _id: 'user_1', username: 'john_doe', email: 'john@example.com', status: 'online', avatar: 'https://api.dicebear.com/9.x/adventurer/svg?seed=john_doe&size=128' },
               role: 'member',
               joinedAt: new Date().toISOString(),
               lastRead: 0,
               unreadCount: 2
+            },
+            {
+              _id: 'mem_3',
+              userId: { _id: 'user_2', username: 'jane_smith', email: 'jane@example.com', status: 'offline', avatar: 'https://api.dicebear.com/9.x/adventurer/svg?seed=jane_smith&size=128' },
+              role: 'member',
+              joinedAt: new Date().toISOString(),
+              lastRead: 0,
+              unreadCount: 0
             }
           ],
-          lastMessage: {
+          lastMessageAt: {
             content: 'This is a random message 😄',
-            senderId: { id: 'user_2', username: 'jane_smith', email: 'jane@example.com', status: 'offline' },
-            sentAt: new Date().toISOString(),
-            _id: 'msg_2'
+            senderId: { _id: 'user_2', username: 'jane_smith', email: 'jane@example.com', status: 'offline' },
+            sendAt: new Date().toISOString(),
+            autoId: 5
           },
           messageAutoId: 5,
           createdBy: 'user_2',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          _id: 'ch_3',
+          name: null,
+          type: 'direct',
+          avatar: null,
+          description: null,
+          members: [
+            {
+              _id: 'mem_4',
+              userId: { _id: 'user_1', username: 'john_doe', email: 'john@example.com', status: 'online', avatar: 'https://api.dicebear.com/9.x/adventurer/svg?seed=john_doe&size=128' },
+              role: 'admin',
+              joinedAt: new Date().toISOString(),
+              lastRead: 0,
+              unreadCount: 0
+            },
+            {
+              _id: 'mem_5',
+              userId: { _id: 'user_2', username: 'jane_smith', email: 'jane@example.com', status: 'offline', avatar: 'https://api.dicebear.com/9.x/adventurer/svg?seed=jane_smith&size=128' },
+              role: 'member',
+              joinedAt: new Date().toISOString(),
+              lastRead: 0,
+              unreadCount: 1
+            }
+          ],
+          lastMessageAt: {
+            content: 'Hey! How are you doing?',
+            senderId: { _id: 'user_1', username: 'john_doe', email: 'john@example.com', status: 'online' },
+            sendAt: new Date().toISOString(),
+            autoId: 3
+          },
+          messageAutoId: 3,
+          createdBy: 'user_1',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         }
@@ -283,8 +274,8 @@ export const useChannels = () => {
   };
 
   return {
-    channels,
-    loading,
+    channels: Array.isArray(channels) ? channels : [],
+    channelsLoading: loading,
     loadChannels,
     createChannel,
     renameChannel,

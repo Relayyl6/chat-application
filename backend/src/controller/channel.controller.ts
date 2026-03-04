@@ -20,18 +20,40 @@ import {
 export const createChannel = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         const { name, type, avatar, userIds, description } = req.body;
-        const channel = await createChannelService(req.user._id, { name, type, avatar, userIds, description });
 
-        // Broadcast via Socket.IO
+        if (!req.user?._id) return next(new AppError('Not authenticated', 401));
+
+        // ✅ For DMs, don't generate an avatar from name (name is null)
+        let finalAvatar = avatar?.trim() || null;
+        if (type !== 'direct' && !finalAvatar) {
+            const displayName = name || 'Channel';
+            finalAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random&size=128`;
+        }
+
+        const channel = await createChannelService(req.user._id, {
+            name,
+            type,
+            avatar: finalAvatar,
+            userIds,
+            description
+        });
+
+        // ✅ Broadcast to ALL members, not just creator
         const io = req.app.get('io');
-        if (io) {
-            io.to(`user:${req.user._id}`).emit('channel:created', { channel });
+        if (io && channel) {
+            const allMemberIds = [
+                req.user._id.toString(),
+                ...userIds
+            ];
+            allMemberIds.forEach(memberId => {
+                io.to(`user:${memberId}`).emit('channel:created', { channel });
+            });
         }
 
         res.status(201).json({
             success: true,
             data: { channel },
-            message: 'Channel created successfully'
+            message: type === 'direct' ? 'Direct message created successfully' : 'Channel created successfully'
         });
     } catch (error) {
         next(error);

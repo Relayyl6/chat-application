@@ -19,7 +19,6 @@ import { GoogleIcon, FacebookIcon, SitemarkIcon } from '@/components/SitemarkIco
 import AppTheme from '@/components/Apptheme';
 import ColorModeSelect from '@/components/customizations/ColorModeSelect';
 import { useRouter } from 'next/navigation';
-import { connectSocket } from '@/lib/socket';
 import { api } from '@/lib/api';
 
 const Card = styled(MuiCard)(({ theme }) => ({
@@ -30,14 +29,10 @@ const Card = styled(MuiCard)(({ theme }) => ({
   padding: theme.spacing(4),
   gap: theme.spacing(2),
   margin: 'auto',
-  boxShadow:
-    'hsla(220, 30%, 5%, 0.05) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.05) 0px 15px 35px -5px',
-  [theme.breakpoints.up('sm')]: {
-    width: '450px',
-  },
+  boxShadow: 'hsla(220, 30%, 5%, 0.05) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.05) 0px 15px 35px -5px',
+  [theme.breakpoints.up('sm')]: { width: '450px' },
   ...theme.applyStyles('dark', {
-    boxShadow:
-      'hsla(220, 30%, 5%, 0.5) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.08) 0px 15px 35px -5px',
+    boxShadow: 'hsla(220, 30%, 5%, 0.5) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.08) 0px 15px 35px -5px',
   }),
 }));
 
@@ -45,66 +40,64 @@ const SignUpContainer = styled(Stack)(({ theme }) => ({
   height: 'calc((1 - var(--template-frame-height, 0)) * 100dvh)',
   minHeight: '100%',
   padding: theme.spacing(2),
-  [theme.breakpoints.up('sm')]: {
-    padding: theme.spacing(4),
-  },
+  [theme.breakpoints.up('sm')]: { padding: theme.spacing(4) },
   '&::before': {
     content: '""',
     display: 'block',
     position: 'absolute',
     zIndex: -1,
     inset: 0,
-    backgroundImage:
-      'radial-gradient(ellipse at 50% 50%, hsl(210, 100%, 97%), hsl(0, 0%, 100%))',
+    backgroundImage: 'radial-gradient(ellipse at 50% 50%, hsl(210, 100%, 97%), hsl(0, 0%, 100%))',
     backgroundRepeat: 'no-repeat',
     ...theme.applyStyles('dark', {
-      backgroundImage:
-        'radial-gradient(at 50% 50%, hsla(210, 100%, 16%, 0.5), hsl(220, 30%, 5%))',
+      backgroundImage: 'radial-gradient(at 50% 50%, hsla(210, 100%, 16%, 0.5), hsl(220, 30%, 5%))',
     }),
   },
 }));
 
 export default function SignUp(props: { disableCustomTheme?: boolean }) {
+  const [username, setUsername] = React.useState('');
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [nameError, setNameError] = React.useState(false);
+  const [nameErrorMessage, setNameErrorMessage] = React.useState('');
   const [emailError, setEmailError] = React.useState(false);
   const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
   const [passwordError, setPasswordError] = React.useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
-  const [nameError, setNameError] = React.useState(false);
-  const [nameErrorMessage, setNameErrorMessage] = React.useState('');
+  const [submitError, setSubmitError] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
-  const [fullName, setFullName] = React.useState("")
-  const [email, setEmail] = React.useState("")
-  const [password, setPassword] = React.useState("")
 
-  const router = useRouter()
+  const router = useRouter();
+
   const validateInputs = () => {
     let isValid = true;
 
-    if (!email || !/\S+@\S+\.\S+/.test(email)) {
-      setEmailError(true);
-      setEmailErrorMessage("Please enter a valid email address.");
-      isValid = false;
-    } else {
-      setEmailError(false);
-      setEmailErrorMessage("");
-    }
-
-    if (!fullName) {
+    if (!username || username.length < 3) {
       setNameError(true);
-      setNameErrorMessage("Please enter a valid email address.");
+      setNameErrorMessage('Username must be at least 3 characters.');
       isValid = false;
     } else {
       setNameError(false);
-      setNameErrorMessage("");
+      setNameErrorMessage('');
+    }
+
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+      setEmailError(true);
+      setEmailErrorMessage('Please enter a valid email address.');
+      isValid = false;
+    } else {
+      setEmailError(false);
+      setEmailErrorMessage('');
     }
 
     if (!password || password.length < 6) {
       setPasswordError(true);
-      setPasswordErrorMessage("Password must be at least 6 characters long.");
+      setPasswordErrorMessage('Password must be at least 6 characters long.');
       isValid = false;
     } else {
       setPasswordError(false);
-      setPasswordErrorMessage("");
+      setPasswordErrorMessage('');
     }
 
     return isValid;
@@ -112,25 +105,18 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
-    if (!validateInputs()) return; // ❗ STOP if invalid
-  
+    if (!validateInputs()) return;
+
     setIsLoading(true);
-  
+    setSubmitError('');
+
     try {
-      const { user, token } = await api.register(fullName, email, password);
-
-       // Save to localStorage
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-
-      // Connect to Socket.IO after login
-      connectSocket(token);
-      
-      // Redirect to chat
-      router.push("/log-in");
-    } catch (error) {
-      console.error("An error occured", error)
+      await api.register(username, email, password);
+      // Just redirect to login — user needs to sign in to get socket connected
+      router.push('/log-in');
+    } catch (error: any) {
+      console.error('Registration failed:', error);
+      setSubmitError(error?.message || 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -143,29 +129,19 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
       <SignUpContainer direction="column" justifyContent="space-between">
         <Card variant="outlined">
           <SitemarkIcon />
-          <Typography
-            component="h1"
-            variant="h4"
-            sx={{ width: '100%', fontSize: 'clamp(2rem, 10vw, 2.15rem)' }}
-          >
+          <Typography component="h1" variant="h4" sx={{ width: '100%', fontSize: 'clamp(2rem, 10vw, 2.15rem)' }}>
             Sign up
           </Typography>
-          <Box
-            component="form"
-            onSubmit={handleSubmit}
-            sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
-          >
+          <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <FormControl>
-              <FormLabel htmlFor="name">Full name</FormLabel>
+              <FormLabel htmlFor="name">Username</FormLabel>
               <TextField
-                autoComplete="name"
-                name="name"
-                required
-                fullWidth
-                id="name"
+                id="name" name="name"
                 placeholder="Jon Snow"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
+                autoComplete="name"
+                required fullWidth
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 error={nameError}
                 helperText={nameErrorMessage}
                 color={nameError ? 'error' : 'primary'}
@@ -174,31 +150,24 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
             <FormControl>
               <FormLabel htmlFor="email">Email</FormLabel>
               <TextField
-                required
-                fullWidth
-                id="email"
+                id="email" name="email" type="email"
                 placeholder="your@email.com"
-                name="email"
                 autoComplete="email"
+                required fullWidth
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                variant="outlined"
                 error={emailError}
                 helperText={emailErrorMessage}
-                color={passwordError ? 'error' : 'primary'}
+                color={emailError ? 'error' : 'primary'}
               />
             </FormControl>
             <FormControl>
               <FormLabel htmlFor="password">Password</FormLabel>
               <TextField
-                required
-                fullWidth
-                name="password"
+                id="password" name="password" type="password"
                 placeholder="••••••"
-                type="password"
-                id="password"
                 autoComplete="new-password"
-                variant="outlined"
+                required fullWidth
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 error={passwordError}
@@ -206,48 +175,34 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
                 color={passwordError ? 'error' : 'primary'}
               />
             </FormControl>
+
+            {submitError && (
+              <Typography color="error" variant="body2" sx={{ textAlign: 'center' }}>
+                {submitError}
+              </Typography>
+            )}
+
             <FormControlLabel
               control={<Checkbox value="allowExtraEmails" color="primary" />}
               label="I want to receive updates via email."
             />
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              onClick={validateInputs}
-            >
-              Sign up
+            <Button type="submit" fullWidth variant="contained" disabled={isLoading}>
+              {isLoading ? 'Creating account...' : 'Sign up'}
             </Button>
           </Box>
           <Divider>
             <Typography sx={{ color: 'text.secondary' }}>or</Typography>
           </Divider>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Button
-              fullWidth
-              variant="outlined"
-              onClick={() => alert('Sign up with Google')}
-              startIcon={<GoogleIcon />}
-            >
+            <Button fullWidth variant="outlined" onClick={() => alert('Sign up with Google')} startIcon={<GoogleIcon />}>
               Sign up with Google
             </Button>
-            <Button
-              fullWidth
-              variant="outlined"
-              onClick={() => alert('Sign up with Facebook')}
-              startIcon={<FacebookIcon />}
-            >
+            <Button fullWidth variant="outlined" onClick={() => alert('Sign up with Facebook')} startIcon={<FacebookIcon />}>
               Sign up with Facebook
             </Button>
             <Typography sx={{ textAlign: 'center' }}>
               Already have an account?{' '}
-              <Link
-                href="/log-in"
-                variant="body2"
-                sx={{ alignSelf: 'center' }}
-              >
-                Sign in
-              </Link>
+              <Link href="/log-in" variant="body2" sx={{ alignSelf: 'center' }}>Sign in</Link>
             </Typography>
           </Box>
         </Card>

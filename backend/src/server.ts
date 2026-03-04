@@ -63,10 +63,6 @@ app.get('/api/health', (req: Request, res: Response) => {
 // Error handling middleware (must be registered after all routes)
 app.use(errorMiddleware);
 
-// Initialize Socket.IO and make it accessible in routes
-const io = initializeSocket(httpServer);
-app.set('io', io);
-
 // Start server
 
 const startServer = async () => {
@@ -74,6 +70,10 @@ const startServer = async () => {
     await connectToDatabase();
     await connectRedis();
     startHealthCheckJob();
+
+    // Initialize Socket.IO and make it accessible in routes
+    const io = await initializeSocket(httpServer);
+    app.set('io', io);
 
     httpServer.listen(PORT, () => {
       console.log(`\n✅ Server running on port ${PORT}`);

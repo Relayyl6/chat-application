@@ -61,6 +61,16 @@ const Page = () => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [socketMessages, dmMessages]);
 
+  // ─── Per-sender colour for group chats ────────────────────────────────────
+  const senderColors = ['bg-violet-500', 'bg-blue-500', 'bg-pink-500', 'bg-orange-500', 'bg-teal-500'];
+  const senderColorMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    channel?.members.forEach((m, i) => {
+      map[m.userId._id] = senderColors[i % senderColors.length];
+    });
+    return map;
+  }, [channel]);
+
   // ─── Loading guard ────────────────────────────────────────────────────────
   if (!isChannel && !person) {
     return (
@@ -79,13 +89,15 @@ const Page = () => {
 
     // Direct channel — show the other person's name
     if (isDirect) {
-      const other = channel!.users.find(u => u.userId.id !== currentUserId);
+      const other = channel!.members.find(
+        m => m.userId._id !== currentUserId
+      );
       return other?.userId.username ?? 'Direct Message';
     }
 
     // Fallback: comma-separated member names
-    return channel!.users
-      .filter(u => u.userId.id !== currentUserId)
+    return channel!.members
+      .filter(u => u.userId._id !== currentUserId)
       .map(u => u.userId.username)
       .join(', ') || 'Chat';
   };
@@ -94,12 +106,12 @@ const Page = () => {
     if (!isChannel) return person!.firstLine;
 
     if (isGroup) {
-      const memberCount = channel!.users.length;
+      const memberCount = channel!.members.length;
       return `${memberCount} member${memberCount !== 1 ? 's' : ''}`;
     }
 
     if (isDirect) {
-      const other = channel!.users.find(u => u.userId.id !== currentUserId);
+      const other = channel!.members.find(u => u.userId._id !== currentUserId);
       return other?.userId.status ?? 'offline';
     }
 
@@ -115,16 +127,6 @@ const Page = () => {
     ai: 'bg-purple-500',
     me: 'bg-green-500',
   };
-
-  // ─── Per-sender colour for group chats ────────────────────────────────────
-  const senderColors = ['bg-violet-500', 'bg-blue-500', 'bg-pink-500', 'bg-orange-500', 'bg-teal-500'];
-  const senderColorMap = useMemo(() => {
-    const map: Record<string, string> = {};
-    channel?.users.forEach((u, i) => {
-      map[u.userId.id] = senderColors[i % senderColors.length];
-    });
-    return map;
-  }, [channel]);
 
   return (
     <div className="flex flex-col p-2 gap-2 w-full h-full max-md:hidden rounded-xl">
@@ -166,11 +168,11 @@ const Page = () => {
                 )}
 
                 {(searchResults.length > 0 ? searchResults : socketMessages).map((msg) => {
-                  const isMe = msg.senderId.id === currentUserId;
+                  const isMe = msg.senderId._id === currentUserId;
                   const bubbleColor = isMe
                     ? 'bg-green-500'
                     : isGroup
-                      ? senderColorMap[msg.senderId.id] ?? 'bg-violet-500'
+                      ? senderColorMap[msg.senderId._id] ?? 'bg-violet-500'
                       : 'bg-violet-500';
 
                   return (

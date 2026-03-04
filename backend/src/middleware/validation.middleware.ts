@@ -29,6 +29,17 @@ export const loginSchema = z.object({
     password: z.string().min(1, 'Password is required')
 });
 
+export const updateProfileSchema = z.object({
+    username: z.string()
+        .min(3, 'Username must be at least 3 characters')
+        .max(20, 'Username must be at most 20 characters')
+        .regex(/^[a-zA-Z0-9_-]+$/, 'Username can only contain letters, numbers, underscore, and dash')
+        .optional(),
+    avatar: z.string()
+        .url('Invalid avatar URL')
+        .optional()
+});
+
 // ===== CHANNEL SCHEMAS =====
 export const createChannelSchema = z.object({
     name: z.string()

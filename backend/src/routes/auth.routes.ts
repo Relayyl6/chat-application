@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { authMiddleware } from "../middleware/auth.middleware";
 import { LogIn, SignUp, getCurrentUser, changeStatus, updateProfile } from "../controller/auth.controller";
-import { validate, registerSchema, loginSchema } from "../middleware/validation.middleware";
+import { validate, registerSchema, loginSchema, updateProfileSchema } from "../middleware/validation.middleware";
 
 const authRouter = Router();
 
@@ -124,7 +124,7 @@ authRouter.get('/current', authMiddleware, getCurrentUser);
  *       200:
  *         description: Profile updated
  */
-authRouter.put('/profile', authMiddleware, validate(registerSchema), updateProfile);
+authRouter.put('/profile', authMiddleware, validate(updateProfileSchema), updateProfile);
 
 /**
  * @swagger

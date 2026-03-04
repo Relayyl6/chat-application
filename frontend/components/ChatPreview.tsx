@@ -5,34 +5,54 @@ import Header from './Header';
 import ChatCard from './ChatCard'
 import ChatCardSkeleton from './ChatCardSkeleton'
 import { useAppContext } from '@/context/useContext';
+import { useChannels } from '@/hooks/useChannels';
 import { useRouter } from 'next/navigation';
 import { socketActions } from '@/lib/socket';
+import { getChannelAvatar } from '@/lib/tools';
 
-// ─── Tab type ────────────────────────────────────────────────────────────────
 type Tab = 'dms' | 'channels';
 
 const ChatPreview = () => {
   const router = useRouter();
-  const { people, channels, channelsLoading, setActiveChannelId } = useAppContext();
+  const { people, setActiveChannelId } = useAppContext();
+  const { channels, channelsLoading, loadChannels } = useChannels();
 
-  const [isLoading] = useState(false); // DMs: already in context/localStorage, no spinner needed
+  const currentUserId = typeof window !== 'undefined'
+    ? JSON.parse(localStorage.getItem('user') || '{}')._id
+    : '';
+
+  const [isLoading] = useState(false);
   const [searchValue, setSearchValue] = useState<string>("");
   const [tab, setTab] = useState<Tab>('dms');
-
-  // New-chat modal state (unchanged — passed to Header)
   const [something, setSomething] = useState(false);
   const [another, setAnother] = useState(true);
   const [mode, setMode] = useState<"dm" | "group">("dm");
   const [name, setName] = useState("");
   const [userId, setUserId] = useState("");
   const [extraInfo, setExtraInfo] = useState("");
-  const [members, setMembers] = useState<string[]>([""]);
+  const [members, setMembers] = useState<Member[]>([]);  // ✅ Member[] not string[]
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchValue(e.target.value);
   };
 
-  // ─── Filtered DMs ──────────────────────────────────────────────────────────
+  const handleChannelCreated = async (channelId: string) => {
+    try {
+      await loadChannels();
+      setName("");
+      setExtraInfo("");
+      setUserId("");
+      setMode("dm");
+      setMembers([]);
+      setSomething(false);
+      setActiveChannelId(channelId);
+      socketActions.joinChannel(channelId);
+      router.push(`/chat/chatsection/${channelId}`);
+    } catch (error) {
+      console.error('Error handling channel creation:', error);
+    }
+  };
+
   const filteredPeople = people.order.filter((id: string) => {
     const person = people.byId[id];
     const search = searchValue.toLowerCase().trim();
@@ -42,18 +62,16 @@ const ChatPreview = () => {
     );
   });
 
-  // ─── Filtered Channels ─────────────────────────────────────────────────────
-  const filteredChannels = channels.filter((channel) => {
+  const filteredChannels = (channels || []).filter((channel) => {
     const search = searchValue.toLowerCase().trim();
-    const displayName = channel.name ?? 'Direct Message';
-    const preview = channel.lastMessage?.content ?? '';
+    const displayName = channel.name ?? '';
+    const preview = channel.lastMessageAt?.content ?? '';
     return (
       displayName.toLowerCase().includes(search) ||
       preview.toLowerCase().includes(search)
     );
   });
 
-  // ─── Channel click: join socket room + navigate ────────────────────────────
   const handleChannelClick = (channelId: string) => {
     setActiveChannelId(channelId);
     socketActions.joinChannel(channelId);
@@ -80,29 +98,23 @@ const ChatPreview = () => {
         setMode={setMode}
         members={members}
         setMembers={setMembers}
+        onChannelCreated={handleChannelCreated}
       />
 
       <div className='w-full h-px bg-gray-700 border-border-strong border' />
 
-      {/* ─── Tabs ──────────────────────────────────────────────────────────── */}
       <div className='flex flex-row mt-2 gap-1 rounded-lg bg-bg-input p-1'>
         <button
           onClick={() => setTab('dms')}
           className={`flex-1 py-1.5 text-sm font-semibold rounded-md transition-colors duration-150
-            ${tab === 'dms'
-              ? 'bg-btn-light-text text-white'
-              : 'text-gray-400 hover:text-white'
-            }`}
+            ${tab === 'dms' ? 'bg-btn-light-text text-white' : 'text-gray-400 hover:text-white'}`}
         >
           DMs
         </button>
         <button
           onClick={() => setTab('channels')}
           className={`flex-1 py-1.5 text-sm font-semibold rounded-md transition-colors duration-150
-            ${tab === 'channels'
-              ? 'bg-btn-light-text text-white'
-              : 'text-gray-400 hover:text-white'
-            }`}
+            ${tab === 'channels' ? 'bg-btn-light-text text-white' : 'text-gray-400 hover:text-white'}`}
         >
           Channels
         </button>
@@ -115,19 +127,14 @@ const ChatPreview = () => {
           {tab === 'dms' && (
             <>
               {isLoading ? (
-                [...Array(8)].map((_, index) => <ChatCardSkeleton key={index} />)
+                [...Array(8)].map((_, i) => <ChatCardSkeleton key={i} />)
               ) : filteredPeople.length === 0 ? (
-                <p className="text-gray-400 text-sm p-3 flex items-center justify-center">
-                  No chats found
-                </p>
+                <p className="text-gray-400 text-sm p-3 flex items-center justify-center">No chats found</p>
               ) : (
                 filteredPeople.map((id: string) => {
                   const person = people.byId[id];
                   return (
-                    <div
-                      className='flex flex-row justify-between box-border m-1 bg-bg-input rounded-md'
-                      key={id}
-                    >
+                    <div className='flex flex-row justify-between box-border m-1 bg-bg-input rounded-md' key={id}>
                       <ChatCard
                         id={id}
                         name={person.title}
@@ -144,22 +151,30 @@ const ChatPreview = () => {
           {tab === 'channels' && (
             <>
               {channelsLoading ? (
-                [...Array(5)].map((_, index) => <ChatCardSkeleton key={index} />)
+                [...Array(5)].map((_, i) => <ChatCardSkeleton key={i} />)
               ) : filteredChannels.length === 0 ? (
-                <p className="text-gray-400 text-sm p-3 flex items-center justify-center">
-                  No channels found
-                </p>
+                <p className="text-gray-400 text-sm p-3 flex items-center justify-center">No channels found</p>
               ) : (
                 filteredChannels.map((channel) => {
-                  const displayName = channel.name
-                    ?? channel.users
-                         .filter(u => u.userId.id !== JSON.parse(localStorage.getItem('user') || '{}').id)
-                         .map(u => u.userId.username)
-                         .join(', ')
-                    ?? 'Direct Message';
+                  // Derive display name properly
+                  const displayName = channel.type === 'direct'
+                    ? channel.members
+                        .filter(m => m.userId._id !== currentUserId)
+                        .map(m => m.userId.username)
+                        .join(', ') || 'Direct Message'
+                    : channel.name ?? 'Unnamed Channel';
 
-                  const preview = channel.lastMessage?.content ?? '';
-                  const date = channel.lastMessage?.sentAt ?? channel.updatedAt ?? '';
+                  // Derive avatar using utility
+                  const avatar = getChannelAvatar(channel, currentUserId);
+
+                  // Use correct field name lastMessageAt
+                  const preview = channel.lastMessageAt?.content ?? '';
+                  const date = channel.lastMessageAt?.sendAt ?? channel.updatedAt;
+
+                  // ✅ Sum unread counts for current user
+                  const unreadCount = channel.members
+                    .find(m => m.userId._id === currentUserId)
+                    ?.unreadCount ?? 0;
 
                   return (
                     <div
@@ -167,12 +182,13 @@ const ChatPreview = () => {
                       key={channel._id}
                       onClick={() => handleChannelClick(channel._id)}
                     >
-                      {/* Reuse your ChatCard — same visual style */}
                       <ChatCard
                         id={channel._id}
                         name={displayName}
+                        avatar={avatar}
                         lastMessage={preview}
                         date={date}
+                        unreadCount={unreadCount}
                       />
                     </div>
                   );
@@ -180,7 +196,6 @@ const ChatPreview = () => {
               )}
             </>
           )}
-
         </div>
       </div>
     </main>

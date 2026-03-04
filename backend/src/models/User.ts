@@ -54,7 +54,8 @@ userSchema.pre('save', async function(this: any, next: any) {
 // Set avatar separately - after password hashing
 userSchema.pre('save', async function(this: any, next: any) {
     if (!this.avatar && this.isModified('username')) {
-        this.avatar = `https://ui-avatars.com/api/?name=${this.username}&background=random&size=128`
+        // this.avatar = `https://ui-avatars.com/api/?name=${this.username}&background=random&size=128`
+        this.avatar = `https://api.dicebear.com/9.x/adventurer/svg?seed=${this.username}&size=128`
     }
     next();
 })

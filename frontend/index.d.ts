@@ -59,10 +59,11 @@ interface HeaderProps {
   extraInfo: string;
   setExtraInfo: React.Dispatch<React.SetStateAction<string>>;
 
-  members: string[],
-  setMembers: React.Dispatch<React.SetStateAction<string[]>>,
+  members: Member[],
+  setMembers: React.Dispatch<React.SetStateAction<Member[]>>,
 
   closeModal?: () => void;
+  onChannelCreated: (channelId: string) => Promise<void>; 
 }
 
 interface ContactProp {
@@ -74,11 +75,17 @@ interface ContactProp {
   setMode: React.Dispatch<React.SetStateAction<"dm" | "group">>,
   extraInfo: string,
   setExtraInfo: React.Dispatch<React.SetStateAction<string>>,
-  members: string[],
-  setMembers: React.Dispatch<React.SetStateAction<string[]>>,
-  onClick: () => void,
+  members: Member[],
+  setMembers: React.Dispatch<React.SetStateAction<Member[]>>,
+  onClick: (channelId: string) => void,
   closeModal?: () => void
 }
+
+
+declare type Member = {
+  id: string;
+  value: string;
+};
 
 declare interface AppContextType {
   // --- DM state (unchanged) ---
@@ -105,8 +112,11 @@ declare type PeopleState = {
 declare interface ChatCardProps {
   id: string;
   name: string;
+  avatar?: string | null;
   lastMessage?: string;
+  unreadCount?: number;
   date: Date | string | number;
+  onClick?: () => void;
 }
 
 declare interface Props {
@@ -124,55 +134,80 @@ declare interface SidebarItem {
   ref: string
 }
 
+// ─── User ─────────────────────────────────────────────────────────────────────
 declare interface User {
-  id: string;
+  _id: string;
   username: string;
   email: string;
-  avatar?: string;
+  avatar?: string | null;
   status: 'online' | 'offline' | 'away';
+  lastSeen?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
+// ─── Message Attachment ───────────────────────────────────────────────────────
+declare interface MessageAttachment {
+  url: string;
+  type: string;
+  name: string;
+  size: number;
+}
+
+// ─── Message ──────────────────────────────────────────────────────────────────
 declare interface Message {
   _id: string;
   channelId: string;
-  senderId: User;
+  senderId: User;                          // populated
   content: string;
   type: 'text' | 'image' | 'file' | 'system';
   autoId: number;
-  readBy: string[];
-  deliveredTo: string[];
-  replyTo?: Message;
+  readBy: string[];                        // array of user IDs
+  deliveredTo: string[];                   // array of user IDs
+  replyTo?: Message | string | null;       // populated or just ID
+  attachments?: MessageAttachment[];
+  reactions?: Array<{
+    emoji: string;
+    count: number;
+    userIds: string[];
+  }>;
   createdAt: string;
   updatedAt: string;
+  // ─── Optimistic / client-only fields ──────────────────────────────────────
   status?: 'sending' | 'sent' | 'failed';
   tempId?: number;
-  attachments?: string[];
-  reactions?: Array<{ emoji: string; count: number; userIds: string[] }>;
 }
 
+// ─── Channel Member ───────────────────────────────────────────────────────────
+declare interface ChannelMember {
+  _id?: string;
+  userId: User;                            // populated
+  role: 'admin' | 'member';
+  joinedAt: string;
+  lastRead: number;
+  unreadCount: number;
+}
+
+// ─── Last Message snapshot stored on Channel ──────────────────────────────────
+declare interface ChannelLastMessage {
+  content: string;
+  senderId: User | string;                 // may or may not be populated
+  sendAt: string;                          // note: backend field is 'sendAt' not 'sentAt'
+  autoId: number;
+}
+
+// ─── Channel ──────────────────────────────────────────────────────────────────
 declare interface Channel {
   _id: string;
-  name?: string;
-  type: 'direct' | 'group';
-  avatar?: string;
-  description?: string;
-  users: {
-    userId: User;
-    role: 'admin' | 'member';
-    joinedAt: string;
-    lastRead: number;
-    unreadCount: number;
-  }[];
-  lastMessage?: {
-    content: string;
-    senderId: User;
-    sentAt: string;
-    autoId: number;
-  };
+  name?: string | null;                    // null for direct messages
+  type: 'direct' | 'group' | 'channel';   // backend has all three
+  avatar?: string | null;                  // null for DMs — derived on frontend
+  description?: string | null;            // null for DMs
+  members: ChannelMember[];               // renamed from 'users' to match backend
+  lastMessageAt?: ChannelLastMessage | null;
   messageAutoId: number;
-  createdBy: string;
+  createdBy: User | string;               // may or may not be populated
   createdAt: string;
   updatedAt: string;
 }
-
 declare module 'jsonwebtoken';

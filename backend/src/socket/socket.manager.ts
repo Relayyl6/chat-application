@@ -4,37 +4,48 @@ import { SocketMiddleware } from "./socket.authmidleware";
 import { Connection } from "./socket.connection";
 import { createClient } from "redis";
 import { createAdapter } from "@socket.io/redis-adapter";
+
 export interface AuthSocket extends Socket {
     userId?: string
 }
 
-export const initializeSocket = async (httpServer: HTTPServer) => {
-    const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:3001'];
-    const io = new Server(httpServer, {
+// ✅ Export io so controllers can access it without going through app.get('io')
+let io: Server;
+
+export const getIO = (): Server => {
+    if (!io) throw new Error('Socket.IO not initialized');
+    return io;
+}
+
+export const initializeSocket = async (httpServer: HTTPServer): Promise<Server> => {
+    const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim())
+        || ['http://localhost:3000', 'http://localhost:3001'];
+
+    io = new Server(httpServer, {
         cors: {
             origin: allowedOrigins,
-            credentials: true
-        }
-    })
+            credentials: true,
+            methods: ['GET', 'POST']
+        },
+        // ✅ Ping settings to keep connections alive on Render
+        pingTimeout: 60000,
+        pingInterval: 25000,
+    });
 
-    // 🔴 CREATE SEPARATE REDIS CLIENTS FOR SOCKET.IO ADAPTER
     const pubClient = createClient({ url: process.env.REDIS_URL });
     const subClient = pubClient.duplicate();
 
-    // Add error handlers for Redis clients
     pubClient.on('error', (err) => console.error('Redis Pub Client error:', err));
     subClient.on('error', (err) => console.error('Redis Sub Client error:', err));
 
-    await Promise.all([
-        pubClient.connect(),
-        subClient.connect()
-    ]);
+    await Promise.all([pubClient.connect(), subClient.connect()]);
 
-    io.adapter(createAdapter(pubClient, subClient)); // 🔥 THIS enables multi-server sockets
+    io.adapter(createAdapter(pubClient, subClient));
 
-    io.use(SocketMiddleware)
+    io.use(SocketMiddleware);
 
-    io.on('connection', (socket: AuthSocket) => Connection(socket, io))
+    io.on('connection', (socket: AuthSocket) => Connection(socket, io));
 
+    console.log('✅ Socket.IO initialized');
     return io;
 }

@@ -11,7 +11,7 @@ const Mini = ({
 }: {
   id: string,
   time?: boolean | undefined,
-  date?: string | Date
+  date?: string | Date | number
 }) => {
     const { messagesByChat } = useAppContext();
     const messages = useMemo(() => messagesByChat[chatId] ?? [],
@@ -33,13 +33,13 @@ const Mini = ({
     
     // Fallback to showing the date
     return (
-        <h4>
+        <p>
             {date ? new Date(date).toLocaleDateString("en-US", {
                 year: "numeric",
                 month: "short",
                 day: "numeric"
-            }) : <p className="text-xs">No date</p>}
-        </h4>
+            }) : "No date"}
+        </p>
     )
 }
 

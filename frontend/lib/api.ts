@@ -11,7 +11,7 @@ const getAuthHeaders = (): HeadersInit => {
 export const api = {
   // ===== AUTHENTICATION =====
   async login(email: string, password: string) {
-    const response = await fetch(`${API_URL}/auth/login`, {
+    const response = await fetch(`${API_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
@@ -19,11 +19,11 @@ export const api = {
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || data.message || 'Login failed');
-    return data;
+    return data.data;
   },
 
   async register(username: string, email: string, password: string) {
-    const response = await fetch(`${API_URL}/auth/register`, {
+    const response = await fetch(`${API_URL}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, email, password })
@@ -31,21 +31,21 @@ export const api = {
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || data.message || 'Registration failed');
-    return data;
+    return data.data;
   },
 
   async getCurrentUser() {
-    const response = await fetch(`${API_URL}/auth/current`, {
+    const response = await fetch(`${API_URL}/api/auth/current`, {
       headers: getAuthHeaders()
     });
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to fetch current user');
-    return data;
+    return data.data;
   },
 
   async updateProfile(username: string, avatar?: string) {
-    const response = await fetch(`${API_URL}/auth/profile`, {
+    const response = await fetch(`${API_URL}/api/auth/profile`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify({ username, avatar })
@@ -53,11 +53,11 @@ export const api = {
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to update profile');
-    return data;
+    return data.data;
   },
 
   async changeStatus(status: 'online' | 'offline' | 'away') {
-    const response = await fetch(`${API_URL}/auth/status`, {
+    const response = await fetch(`${API_URL}/api/auth/status`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify({ status })
@@ -65,22 +65,22 @@ export const api = {
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to change status');
-    return data;
+    return data.data;
   },
 
   // ===== CHANNELS =====
   async getChannels() {
-    const response = await fetch(`${API_URL}/channels`, {
+    const response = await fetch(`${API_URL}/api/channels`, {
       headers: getAuthHeaders()
     });
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to fetch channels');
-    return data;
+    return data.data;
   },
 
   async createChannel(type: 'direct' | 'group' | 'channel', name: string, userIds: string[], description?: string, avatar?: string) {
-    const response = await fetch(`${API_URL}/channels`, {
+    const response = await fetch(`${API_URL}/api/channels`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ type, name, userIds, description, avatar })
@@ -88,21 +88,21 @@ export const api = {
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to create channel');
-    return data;
+    return data.data;
   },
 
   async getChannel(channelId: string) {
-    const response = await fetch(`${API_URL}/channels/${channelId}`, {
+    const response = await fetch(`${API_URL}/api/channels/${channelId}`, {
       headers: getAuthHeaders()
     });
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to fetch channel');
-    return data;
+    return data.data;
   },
 
   async renameChannel(channelId: string, name: string) {
-    const response = await fetch(`${API_URL}/channels/${channelId}/rename`, {
+    const response = await fetch(`${API_URL}/api/channels/${channelId}/rename`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ name })
@@ -110,22 +110,22 @@ export const api = {
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to rename channel');
-    return data;
+    return data.data;
   },
 
   async searchChannels(query: string) {
-    const response = await fetch(`${API_URL}/channels/search?q=${encodeURIComponent(query)}`, {
+    const response = await fetch(`${API_URL}/api/channels/search?q=${encodeURIComponent(query)}`, {
       headers: getAuthHeaders()
     });
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to search channels');
-    return data;
+    return data.data;
   },
 
   // ===== CHANNEL MEMBERS =====
   async addMembers(channelId: string, userIds: string[]) {
-    const response = await fetch(`${API_URL}/channels/${channelId}/add-members`, {
+    const response = await fetch(`${API_URL}/api/channels/${channelId}/add-members`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ userIds })
@@ -133,43 +133,43 @@ export const api = {
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to add members');
-    return data;
+    return data.data;
   },
 
   async removeMember(channelId: string, userId: string) {
-    const response = await fetch(`${API_URL}/channels/${channelId}/${userId}/remove-member`, {
+    const response = await fetch(`${API_URL}/api/channels/${channelId}/${userId}/remove-member`, {
       method: 'POST',
       headers: getAuthHeaders()
     });
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to remove member');
-    return data;
+    return data.data;
   },
 
   async leaveChannel(channelId: string) {
-    const response = await fetch(`${API_URL}/channels/${channelId}/leave`, {
+    const response = await fetch(`${API_URL}/api/channels/${channelId}/leave`, {
       method: 'POST',
       headers: getAuthHeaders()
     });
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to leave channel');
-    return data;
+    return data.data;
   },
 
   async getChannelMembers(channelId: string) {
-    const response = await fetch(`${API_URL}/channels/${channelId}/members`, {
+    const response = await fetch(`${API_URL}/api/channels/${channelId}/members`, {
       headers: getAuthHeaders()
     });
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to fetch members');
-    return data;
+    return data.data;
   },
 
   async updateMemberRole(channelId: string, memberId: string, role: 'admin' | 'member') {
-    const response = await fetch(`${API_URL}/channels/${channelId}/members/role`, {
+    const response = await fetch(`${API_URL}/api/channels/${channelId}/members/role`, {
       method: 'PATCH',
       headers: getAuthHeaders(),
       body: JSON.stringify({ memberId, role })
@@ -177,22 +177,22 @@ export const api = {
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to update member role');
-    return data;
+    return data.data;
   },
 
   // ===== MESSAGES =====
   async getMessages(channelId: string, page: number = 1, limit: number = 50) {
-    const response = await fetch(`${API_URL}/messages/${channelId}?page=${page}&limit=${limit}`, {
+    const response = await fetch(`${API_URL}/api/messages/${channelId}?page=${page}&limit=${limit}`, {
       headers: getAuthHeaders()
     });
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to fetch messages');
-    return data;
+    return data.data;
   },
 
   async sendMessage(channelId: string, content: string, attachments?: any[], replyTo?: string) {
-    const response = await fetch(`${API_URL}/messages/${channelId}/send`, {
+    const response = await fetch(`${API_URL}/api/messages/${channelId}/send`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ content, attachments, replyTo })
@@ -200,22 +200,22 @@ export const api = {
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to send message');
-    return data;
+    return data.data;
   },
 
   async markMessagesAsRead(channelId: string) {
-    const response = await fetch(`${API_URL}/messages/${channelId}/read`, {
+    const response = await fetch(`${API_URL}/api/messages/${channelId}/read`, {
       method: 'POST',
       headers: getAuthHeaders()
     });
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to mark messages as read');
-    return data;
+    return data.data;
   },
 
   async editMessage(channelId: string, messageId: string, content: string) {
-    const response = await fetch(`${API_URL}/messages/${channelId}/${messageId}/edit`, {
+    const response = await fetch(`${API_URL}/api/messages/${channelId}/${messageId}/edit`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify({ content })
@@ -223,22 +223,22 @@ export const api = {
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to edit message');
-    return data;
+    return data.data;
   },
 
   async deleteMessage(channelId: string, messageId: string) {
-    const response = await fetch(`${API_URL}/messages/${channelId}/${messageId}/delete`, {
+    const response = await fetch(`${API_URL}/api/messages/${channelId}/${messageId}/delete`, {
       method: 'DELETE',
       headers: getAuthHeaders()
     });
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to delete message');
-    return data;
+    return data.data;
   },
 
   async reactToMessage(channelId: string, messageId: string, emoji: string) {
-    const response = await fetch(`${API_URL}/messages/${channelId}/${messageId}/react`, {
+    const response = await fetch(`${API_URL}/api/messages/${channelId}/${messageId}/react`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ emoji })
@@ -246,16 +246,16 @@ export const api = {
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to add reaction');
-    return data;
+    return data.data;
   },
 
   async searchMessages(channelId: string, query: string, page: number = 1, limit: number = 50) {
-    const response = await fetch(`${API_URL}/messages/${channelId}/search?q=${encodeURIComponent(query)}&page=${page}&limit=${limit}`, {
+    const response = await fetch(`${API_URL}/api/messages/${channelId}/search?q=${encodeURIComponent(query)}&page=${page}&limit=${limit}`, {
       headers: getAuthHeaders()
     });
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to search messages');
-    return data;
+    return data.data;
   }
 };

@@ -17,62 +17,81 @@ export const Connection = async (socket: AuthSocket, io: Server) => {
         "User ID:", socket.userId
     );
 
-    const redisClient = getRedisClient(); // 👈 call it here to get the actual client
+    // Join personal room so user receives direct notifications
+    socket.join(`user:${socket.userId}`);
 
-    await userModel.findByIdAndUpdate(socket.userId, { status: 'online' });
+    const redisClient = getRedisClient(); // Get Redis client instance
 
-    await redisClient.hSet(`user: ${socket.userId}`, 'socketId', socket.id);
+    try {
+        await userModel.findByIdAndUpdate(socket.userId, { status: 'online' });
 
-    const userChannels = await getUserchannels(socket.userId!);
-    userChannels.forEach((channelId: any) => {
-        socket.join(`channel:${channelId}`);
-    })
+        await redisClient.hSet(`user:${socket.userId}`, 'socketId', socket.id);
 
-    userChannels.forEach(channelId => {
-        socket.to(`channel:${channelId}`).emit("user:status", {
-            userId: socket.userId,
-            status: "online",
-        });
-    });
+        const userChannels = await getUserchannels(socket.userId!);
+        userChannels.forEach((channelId: any) => {
+            socket.join(`channel:${channelId}`);
+        })
 
-    const messageTimestamps = new Map<string, number>();
-
-    socket.on('message:send', (data) => {
-        handleMessage(io, socket, data);
-    });
-
-    socket.on("message:send", async (data, callback) => {
-        try {
-            const now = Date.now();
-            const last = messageTimestamps.get(socket.userId!) || 0;
-            if (now - last < 300) return;
-            messageTimestamps.set(socket.userId!, now);
-            const msg = await handleMessage(io, socket, data);
-            callback({ status: "ok", messageId: (msg as any)?._id});
-        } catch {
-            callback({ status: "error" });
-        }
-    });
-
-    socket.on('message:typing', (data) => handleTyping(io, socket, data));
-
-    socket.on('channel:join', async (data) => socket.join(`channel:${data.channelId}`));
-
-    socket.on('channel:leave', async (data) => {
-        const { channelId } = data;
-        socket.leave(`channel:${channelId}`);
-    });
-
-    socket.on('disconnect', async () => {
-        console.log("Client disconnected:", socket.id);
-
-        await userModel.findByIdAndUpdate(socket.userId, { status: 'offline' });
-        await redisClient.hDel(`user: ${socket.userId}`, 'socketId');
         userChannels.forEach(channelId => {
             socket.to(`channel:${channelId}`).emit("user:status", {
                 userId: socket.userId,
-                status: "offline",
+                status: "online",
             });
         });
-    });
+
+        const messageTimestamps = new Map<string, number>();
+
+        // ✅ Single handler
+        socket.on('message:send', async (data, callback) => {
+            try {
+                const now = Date.now();
+                const last = messageTimestamps.get(socket.userId!) || 0;
+                if (now - last < 300) {
+                    if (typeof callback === 'function') {
+                        callback({ status: "error", reason: "rate_limited" });
+                    }
+                    return;
+                }
+                messageTimestamps.set(socket.userId!, now);
+                const msg = await handleMessage(io, socket, data);
+                if (typeof callback === 'function') {
+                    callback({ status: "ok", messageId: (msg as any)?._id });
+                }
+            } catch (err) {
+                console.error('[socket] message:send error:', err);
+                if (typeof callback === 'function') {
+                    callback({ status: "error" });
+                }
+            }
+        });
+
+        socket.on('message:typing', (data) => handleTyping(io, socket, data));
+
+        socket.on('channel:join', async (data) => socket.join(`channel:${data.channelId}`));
+
+        socket.on('channel:leave', async (data) => {
+            const { channelId } = data;
+            socket.leave(`channel:${channelId}`);
+        });
+
+        socket.on('disconnect', async () => {
+            console.log("Client disconnected:", socket.id);
+            try {
+                await userModel.findByIdAndUpdate(socket.userId, { status: 'offline' });
+                // ✅ Fix 2: consistent key without space
+                await redisClient.hDel(`user:${socket.userId}`, 'socketId');
+                userChannels.forEach((channelId) => {
+                    socket.to(`channel:${channelId}`).emit("user:offline", {
+                        userId: socket.userId,
+                        status: "offline",
+                    });
+                });
+            } catch (err) {
+                console.error('[socket] disconnect cleanup error:', err);
+            }
+        });
+    } catch(error) {
+        console.error('[socket] Connection setup error:', error);
+        socket.disconnect();
+    }
 }
