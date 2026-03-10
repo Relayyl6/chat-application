@@ -17,6 +17,8 @@ export const useMessages = (channelId: string | null) => {
     onMessagesRead 
   } = useSocketContext();
 
+  let messageCounter = 0;
+
   // Load messages when channel changes
   useEffect(() => {
     if (!channelId) {
@@ -144,6 +146,7 @@ export const useMessages = (channelId: string | null) => {
     
     const tempId = Date.now();
     const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    messageCounter += 1;
 
     // Optimistic update
     const optimisticMessage: Message = {
@@ -152,6 +155,7 @@ export const useMessages = (channelId: string | null) => {
       senderId: currentUser,
       content,
       type: attachments && attachments.length > 0 ? 'file' : 'text',
+      autoId: messageCounter,
       readBy: [currentUser.id],
       deliveredTo: [currentUser.id],
       createdAt: new Date().toISOString(),

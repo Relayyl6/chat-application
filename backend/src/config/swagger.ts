@@ -11,7 +11,7 @@ const options = {
             description: 'Real-time chat application with WebSocket support',
             contact: {
                 name: 'Developer',
-                email: 'dev@example.com'
+                email: 'oseghaleleonard39@gmail.com'
             }
         },
         servers: [
