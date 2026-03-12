@@ -5,7 +5,8 @@ import {
     registerUser,
     loginUser,
     updateUserStatus,
-    updateUserProfile
+    updateUserProfile,
+    findUserByUsername
 } from '../services/auth.service';
 
 /**
@@ -111,4 +112,22 @@ export const getCurrentUser = async (req: AuthRequest, res: Response, next: Next
     }
 };
 
+export const searchUserByUsername = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+        const { username } = req.query;
 
+        if (!username || typeof username !== 'string' || !username.trim()) {
+            return next(new AppError('Username query param is required', 400));
+        }
+
+        const user = await findUserByUsername(username, req.user._id.toString());
+
+        res.status(200).json({
+            success: true,
+            data: { user },
+            message: 'User found successfully',
+        });
+    } catch (error) {
+        next(error);
+    }
+};

@@ -7,6 +7,7 @@ export const handleTyping = async (io: Server, socket: AuthSocket, data: any) =>
   socket.to(`channel:${channelId}`).emit('user:typing', {
     channelId,
     userId: socket.userId,
+    username: socket.username,
     isTyping
   });
 };

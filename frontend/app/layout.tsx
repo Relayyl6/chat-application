@@ -2,6 +2,12 @@ import type { Metadata } from "next";
 import "./globals.css";
 import ContextProvider from "@/context/useContext";
 
+import Sidebar from '@/components/Sidebar';
+import { MobileSidebar } from '@/components/Sidebar';
+
+// Inside your JSX:
+
+
 export const metadata: Metadata = {
   title: "WeChat",
   description: "Welcome to the We Chat chat application",

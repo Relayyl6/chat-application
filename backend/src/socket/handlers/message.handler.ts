@@ -5,9 +5,8 @@ import { AuthSocket } from '../socket.manager';
 
 export const handleMessage = async (io: Server, socket: AuthSocket, data: any) => {
   try {
-    const { channelId, content, type = 'text', replyTo } = data;
+    const { channelId, content, type = 'text', replyTo, tempId } = data;
 
-    // Get channel and increment autoId
     const channel = await channelModel.findByIdAndUpdate(
       channelId,
       { $inc: { messageAutoId: 1 } },
@@ -15,10 +14,10 @@ export const handleMessage = async (io: Server, socket: AuthSocket, data: any) =
     );
 
     if (!channel) {
-      return socket.emit('error', { message: 'Channel not found' });
+      socket.emit('error', { message: 'Channel not found' });
+      return null;
     }
 
-    // Create message
     const message = await messageModel.create({
       channelId,
       senderId: socket.userId,
@@ -26,60 +25,42 @@ export const handleMessage = async (io: Server, socket: AuthSocket, data: any) =
       type,
       autoId: channel.messageAutoId,
       replyTo,
-      deliveredTo: [socket.userId]
+      deliveredTo: [socket.userId],
     });
 
-    // Populate sender info
     await message.populate('senderId', 'username avatar');
-    if (replyTo) {
-      await message.populate('replyTo');
-    }
+    if (replyTo) await message.populate('replyTo');
 
-    // Update channel's last message
     await channelModel.updateOne(
       { _id: channelId },
       {
         $set: {
-          lastMessage: {
+          lastMessageAt: {
             content: message.content,
             senderId: socket.userId,
             sentAt: message.createdAt,
-            autoId: message.autoId
-          }
-        }
+            autoId: message.autoId,
+          },
+        },
       }
     );
 
-    // Increment unread count for other users
     await channelModel.updateMany(
-      {
-        _id: channelId,
-        'users.userId': { $ne: socket.userId }
-      },
-      {
-        $inc: { 'users.$.unreadCount': 1 }
-      }
+      { _id: channelId, 'members.userId': { $ne: socket.userId } },
+      { $inc: { 'members.$.unreadCount': 1 } }
     );
 
-    // Emit to channel
-    io.to(`channel:${channelId}`).emit('message:new', message);
-
-    // Send delivery confirmation
-    socket.emit('message:sent', { tempId: data.tempId, message });
-
-    io.to(`channel:${channelId}`).emit("message:delivered", {
-      messageId: message._id,
-      userId: socket.userId
+    // Broadcast the full message object to everyone in the room (including sender).
+    // Client listens for 'message:sent' and checks message.channelId to filter.
+    io.to(`channel:${channelId}`).emit('message:sent', {
+      ...message.toObject(),
+      tempId, // so sender can replace their optimistic bubble
     });
 
-    socket.on("message:read", async ({ messageId, channelId }) => {
-      socket.to(`channel:${channelId}`).emit("message:read", {
-        messageId,
-        userId: socket.userId
-      });
-    });
+    return message;
   } catch (error) {
     console.error('Error sending message:', error);
     socket.emit('error', { message: 'Failed to send message' });
+    return null;
   }
 };

@@ -9,39 +9,20 @@ export const useMessages = (channelId: string | null) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
-  const { 
-    onMessageSent, 
-    onMessageEdited, 
-    onMessageDeleted, 
-    onMessageReactionAdded, 
-    onMessagesRead 
-  } = useSocketContext();
 
-  let messageCounter = 0;
+  const { socket } = useSocketContext();
 
-  // Load messages when channel changes
+  // ─── Load messages when channel changes ──────────────────────────────────
   useEffect(() => {
-    if (!channelId) {
-      console.log('[useMessages] No channelId provided');
-      return;
-    }
+    if (!channelId) return;
 
-    console.log(`[useMessages] Loading messages for channel: ${channelId}`);
-    
     const loadMessages = async () => {
       setLoading(true);
       try {
-        console.log(`[useMessages] Fetching messages for channelId: ${channelId}`);
         const msgs = await api.getMessages(channelId, 1, 50);
-        console.log(`[useMessages] Fetched ${msgs.length} messages`, msgs);
         setMessages(msgs);
         setPage(1);
-        
-        // Mark as read
-        if (msgs.length > 0) {
-          console.log(`[useMessages] Marking ${msgs.length} messages as read`);
-          await api.markMessagesAsRead(channelId);
-        }
+        if (msgs.length > 0) await api.markMessagesAsRead(channelId);
       } catch (error) {
         console.error('[useMessages] Failed to load messages:', error);
       } finally {
@@ -52,148 +33,135 @@ export const useMessages = (channelId: string | null) => {
     loadMessages();
   }, [channelId]);
 
-  // Listen for new messages via socket
+  // ─── Socket listeners ─────────────────────────────────────────────────────
   useEffect(() => {
-    if (!channelId) {
-      console.log('[useMessages] No channelId for socket listeners');
-      return;
-    }
+    if (!channelId || !socket) return;
 
-    console.log(`[useMessages] Setting up socket listeners for channel: ${channelId}`);
+    console.log(`[useMessages] Attaching socket listeners for channel: ${channelId}`);
 
-    const unsubscribeNew = onMessageSent((message) => {
-      console.log('[useMessages] onMessageSent event received:', message);
-      if (message.channelId === channelId) {
-        console.log(`[useMessages] Adding new message to channel ${channelId}`);
-        setMessages((prev) => {
-          const updated = [...prev, message];
-          console.log(`[useMessages] Messages count after add: ${updated.length}`);
-          return updated;
-        });
-        
-        // Mark as read if viewing this channel
-        api.markMessagesAsRead(channelId);
-      } else {
-        console.log(`[useMessages] Message is for different channel: ${message.channelId} vs ${channelId}`);
-      }
-    });
+    const onMessageSent = (message: any) => {
+      if (message.channelId !== channelId) return;
+      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const isOwnMessage = message.senderId?._id === currentUser._id || 
+                           message.senderId === currentUser._id;
+      setMessages(prev => {
+        // Already have this DB message (own message replaced via HTTP) — ignore
+        if (message._id && prev.some(m => m._id === message._id)) return prev;
+        // Own message with tempId match — replace optimistic
+        if (isOwnMessage && message.tempId && prev.some(m => m.tempId === message.tempId)) {
+          return prev.map(m =>
+            m.tempId === message.tempId ? { ...message, status: 'sent' } : m
+          );
+        }
+        // Someone else's message — append
+        if (!isOwnMessage) return [...prev, { ...message, status: 'sent' }];
+        // Own message but no tempId match — ignore (HTTP already handled it)
+        return prev;
+      });
+      api.markMessagesAsRead(channelId).catch(() => {});
+    };
 
-    const unsubscribeEdited = onMessageEdited((data) => {
-      console.log('[useMessages] onMessageEdited event received:', data);
-      if (data.channelId === channelId) {
-        console.log(`[useMessages] Editing message ${data.messageId} in channel ${channelId}`);
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg._id === data.messageId ? { ...msg, content: data.content, updatedAt: data.updatedAt } : msg
-          )
-        );
-      }
-    });
+    // FIX 1: server emits { channelId, messageId, content, updatedAt }
+    // Update by messageId, not by trying to use updated.content from HTTP
+    const onMessageEdited = (data: any) => {
+      if (data.channelId !== channelId) return;
+      setMessages(prev =>
+        prev.map(m => m._id === data.messageId
+          ? { ...m, content: data.content, updatedAt: data.updatedAt }
+          : m
+        )
+      );
+    };
 
-    const unsubscribeDeleted = onMessageDeleted((data) => {
-      console.log('[useMessages] onMessageDeleted event received:', data);
-      if (data.channelId === channelId) {
-        console.log(`[useMessages] Deleting message ${data.messageId} from channel ${channelId}`);
-        setMessages((prev) => prev.filter((msg) => msg._id !== data.messageId));
-      }
-    });
+    const onMessageDeleted = (data: any) => {
+      if (data.channelId !== channelId) return;
+      setMessages(prev => prev.filter(m => m._id !== data.messageId));
+    };
 
-    const unsubscribeReaction = onMessageReactionAdded((data) => {
-      console.log('[useMessages] onMessageReactionAdded event received:', data);
-      if (data.channelId === channelId) {
-        console.log(`[useMessages] Adding reaction to message ${data.messageId} in channel ${channelId}`);
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg._id === data.messageId
-              ? { ...msg, reactions: data.reactions }
-              : msg
-          )
-        );
-      }
-    });
+    // Server now sends fully grouped reactions array — just replace directly
+    const onMessageReactionAdded = (data: any) => {
+      if (data.channelId !== channelId) return;
+      setMessages(prev =>
+        prev.map(m => m._id === data.messageId
+          ? { ...m, reactions: data.reactions }
+          : m
+        )
+      );
+    };
 
-    const unsubscribeRead = onMessagesRead((data) => {
-      console.log('[useMessages] onMessagesRead event received:', data);
-      if (data.channelId === channelId) {
-        console.log(`[useMessages] Updating read status for message ${data.messageId} in channel ${channelId}`);
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg._id === data.messageId
-              ? { ...msg, readBy: data.readBy }
-              : msg
-          )
-        );
-      }
-    });
+    const onMessagesRead = (data: any) => {
+      if (data.channelId !== channelId) return;
+      setMessages(prev =>
+        prev.map(m => ({ ...m, readBy: data.readBy ?? m.readBy }))
+      );
+    };
+
+    socket.on('message:sent',           onMessageSent);
+    socket.on('message:edited',         onMessageEdited);
+    socket.on('message:deleted',        onMessageDeleted);
+    socket.on('message:reaction-added', onMessageReactionAdded);
+    socket.on('messages:read',          onMessagesRead);
 
     return () => {
-      console.log(`[useMessages] Cleaning up socket listeners for channel: ${channelId}`);
-      unsubscribeNew();
-      unsubscribeEdited();
-      unsubscribeDeleted();
-      unsubscribeReaction();
-      unsubscribeRead();
+      socket.off('message:sent',           onMessageSent);
+      socket.off('message:edited',         onMessageEdited);
+      socket.off('message:deleted',        onMessageDeleted);
+      socket.off('message:reaction-added', onMessageReactionAdded);
+      socket.off('messages:read',          onMessagesRead);
     };
-  }, [channelId, onMessageSent, onMessageEdited, onMessageDeleted, onMessageReactionAdded, onMessagesRead]);
+  }, [channelId, socket]);
 
-  const sendMessage = (content: string, attachments?: any[], replyTo?: string) => {
-    if (!channelId) {
-      console.log('[useMessages] Cannot send message: no channelId');
-      return;
-    }
+  // ─── Actions ──────────────────────────────────────────────────────────────
+  let messageCounter = 0;
 
-    console.log(`[useMessages] Sending message to channel ${channelId}:`, { content, attachments, replyTo });
-    
+  const sendMessage = async (content: string, attachments?: any[], replyTo?: string) => {
+    if (!channelId) return;
     const tempId = Date.now();
     const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
     messageCounter += 1;
-
-    // Optimistic update
     const optimisticMessage: Message = {
       _id: '',
       channelId,
       senderId: currentUser,
       content,
-      type: attachments && attachments.length > 0 ? 'file' : 'text',
+      type: attachments?.length ? 'file' : 'text',
       autoId: messageCounter,
-      readBy: [currentUser.id],
-      deliveredTo: [currentUser.id],
+      readBy: [currentUser._id],
+      deliveredTo: [currentUser._id],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       status: 'sending',
       tempId,
       attachments,
-      replyTo
+      replyTo,
     };
-
-    setMessages((prev) => {
-      const updated = [...prev, optimisticMessage];
-      console.log(`[useMessages] Optimistic update: messages count now ${updated.length}`);
-      return updated;
-    });
-
-    // Send via socket
-    socketActions.sendMessage(channelId, content, attachments, replyTo);
-  };
-
-  const editMessage = async (messageId: string, content: string) => {
-    if (!channelId) {
-      console.log('[useMessages] Cannot edit message: no channelId');
-      return;
-    }
-
-    console.log(`[useMessages] Editing message ${messageId} in channel ${channelId}`);
+    setMessages(prev => [...prev, optimisticMessage]);
 
     try {
-      const updated = await api.editMessage(channelId, messageId, content);
-      console.log('[useMessages] Message edited successfully:', updated);
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg._id === messageId ? { ...msg, content: updated.content, updatedAt: updated.updatedAt } : msg
-        )
-      );
-      socketActions.editMessage(channelId, messageId, content);
-      return updated;
+      // Always persist via HTTP and replace optimistic immediately from response
+      const saved = await api.sendMessage(channelId, content, attachments, replyTo, tempId);
+      if (saved) {
+        setMessages(prev => prev.map(m =>
+          m.tempId === tempId ? { ...saved, status: 'sent', tempId } : m
+        ));
+      }
+    } catch (error) {
+      console.error('[useMessages] Failed to send message:', error);
+      // Mark optimistic as failed
+      setMessages(prev => prev.map(m =>
+        m.tempId === tempId ? { ...m, status: 'failed' } : m
+      ));
+    }
+  };
+
+  // FIX 1: don't update state from HTTP response — let the socket event do it.
+  // HTTP call just persists to DB; socket broadcast updates all clients including sender.
+  const editMessage = async (messageId: string, content: string) => {
+    if (!channelId) return;
+    try {
+      await api.editMessage(channelId, messageId, content);
+      // Don't touch messages state here — onMessageEdited socket handler will fire
+      // and update the content for all clients including the editor.
     } catch (error) {
       console.error('[useMessages] Failed to edit message:', error);
       throw error;
@@ -201,42 +169,22 @@ export const useMessages = (channelId: string | null) => {
   };
 
   const deleteMessage = async (messageId: string) => {
-    if (!channelId) {
-      console.log('[useMessages] Cannot delete message: no channelId');
-      return;
-    }
-
-    console.log(`[useMessages] Deleting message ${messageId} from channel ${channelId}`);
-
+    if (!channelId) return;
     try {
       await api.deleteMessage(channelId, messageId);
-      console.log('[useMessages] Message deleted successfully');
-      setMessages((prev) => prev.filter((msg) => msg._id !== messageId));
-      socketActions.deleteMessage(channelId, messageId);
+      // onMessageDeleted socket handler will fire and remove from state
     } catch (error) {
       console.error('[useMessages] Failed to delete message:', error);
       throw error;
     }
   };
 
+  // FIX 4: HTTP call persists; socket event updates state for all clients.
   const reactToMessage = async (messageId: string, emoji: string) => {
-    if (!channelId) {
-      console.log('[useMessages] Cannot react to message: no channelId');
-      return;
-    }
-
-    console.log(`[useMessages] Adding reaction ${emoji} to message ${messageId} in channel ${channelId}`);
-
+    if (!channelId) return;
     try {
-      const updated = await api.reactToMessage(channelId, messageId, emoji);
-      console.log('[useMessages] Reaction added successfully:', updated);
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg._id === messageId ? { ...msg, reactions: updated.reactions } : msg
-        )
-      );
-      socketActions.reactToMessage(channelId, messageId, emoji);
-      return updated;
+      await api.reactToMessage(channelId, messageId, emoji);
+      // onMessageReactionAdded socket handler updates state locally
     } catch (error) {
       console.error('[useMessages] Failed to react to message:', error);
       throw error;
@@ -244,17 +192,9 @@ export const useMessages = (channelId: string | null) => {
   };
 
   const searchMessages = async (query: string) => {
-    if (!channelId) {
-      console.log('[useMessages] Cannot search messages: no channelId');
-      return [];
-    }
-
-    console.log(`[useMessages] Searching messages in channel ${channelId} for query: "${query}"`);
-
+    if (!channelId) return [];
     try {
-      const results = await api.searchMessages(channelId, query, 1, 50);
-      console.log(`[useMessages] Search returned ${results.length} results`);
-      return results;
+      return await api.searchMessages(channelId, query, 1, 50);
     } catch (error) {
       console.error('[useMessages] Failed to search messages:', error);
       throw error;
@@ -262,41 +202,18 @@ export const useMessages = (channelId: string | null) => {
   };
 
   const loadMoreMessages = async () => {
-    if (!channelId || messages.length === 0) {
-      console.log('[useMessages] Cannot load more messages:', { hasChannelId: !!channelId, messageCount: messages.length });
-      return;
-    }
-
-    console.log(`[useMessages] Loading more messages for channel ${channelId}, current page: ${page}`);
-
+    if (!channelId || messages.length === 0) return;
     try {
       const nextPage = page + 1;
-      const olderMessages = await api.getMessages(channelId, nextPage, 50);
-      console.log(`[useMessages] Loaded ${olderMessages.length} older messages from page ${nextPage}`);
-      
-      if (olderMessages.length > 0) {
-        setMessages((prev) => {
-          const updated = [...olderMessages, ...prev];
-          console.log(`[useMessages] Total messages after loadMore: ${updated.length}`);
-          return updated;
-        });
+      const older = await api.getMessages(channelId, nextPage, 50);
+      if (older.length > 0) {
+        setMessages(prev => [...older, ...prev]);
         setPage(nextPage);
-      } else {
-        console.log('[useMessages] No more messages to load');
       }
     } catch (error) {
       console.error('[useMessages] Failed to load more messages:', error);
     }
   };
 
-  return {
-    messages,
-    loading,
-    sendMessage,
-    editMessage,
-    deleteMessage,
-    reactToMessage,
-    searchMessages,
-    loadMoreMessages
-  };
+  return { messages, loading, sendMessage, editMessage, deleteMessage, reactToMessage, searchMessages, loadMoreMessages };
 };

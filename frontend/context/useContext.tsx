@@ -2,9 +2,8 @@
 
 import { usePersistentState } from '@/hooks/usePersistentState';
 import { initialPeople, normalizePeople } from '@/utils/names';
-import React, { createContext, useState, useContext, useEffect } from 'react'
-import { SocketProvider } from './SocketContext';
-import { api } from '@/lib/api';
+import React, { createContext, useState, useContext, useEffect, useMemo } from 'react'
+import { SocketProvider } from './SocketContext';  // named export, not default
 import { useChannels } from '@/hooks/useChannels';
 import { useRouter } from 'next/navigation';
 
@@ -17,20 +16,31 @@ const AppContextInner = ({ children }: { children: React.ReactNode }) => {
   const [people, setPeople] = usePersistentState<PeopleState>('people', normalizePeople(initialPeople));
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<any | null>(null);
-
-  const { channels, loading: channelsLoading } = useChannels();
   const [activeChannelId, setActiveChannelId] = useState<string | null>(null);
 
-  // On mount: load token/user from localStorage, redirect to /log-in if missing
+  const { channels, channelsLoading, loadChannels, createChannel, renameChannel, searchChannels } = useChannels();
+
+  const dmChannels = useMemo(() => channels.filter(c => c.type === 'direct'), [channels]);
+  const groupChannels = useMemo(() => channels.filter(c => c.type !== 'direct'), [channels]);
+
+  // On mount: load token/user from localStorage, redirect to LOGIN if missing
   useEffect(() => {
     const savedToken = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
     if (savedToken && savedUser) {
-      setToken(savedToken);
-      setUser(JSON.parse(savedUser));
-      window.dispatchEvent(new CustomEvent('app:login', { detail: { token: savedToken } }));
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        setToken(savedToken);
+        setUser(parsedUser);
+        window.dispatchEvent(new CustomEvent('app:login', { detail: { token: savedToken } }));
+      } catch {
+        // Corrupt user data — clear and redirect to login
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        router.push('/log-in');
+      }
     } else {
-      router.push('/sign-up');
+      router.push('/log-in');  // was '/sign-up' — fixed
     }
   }, []);
 
@@ -39,6 +49,7 @@ const AppContextInner = ({ children }: { children: React.ReactNode }) => {
     localStorage.setItem('user', JSON.stringify(newUser));
     setToken(newToken);
     setUser(newUser);
+    window.dispatchEvent(new CustomEvent('app:login', { detail: { token: newToken } }));
   };
 
   const logout = () => {
@@ -46,6 +57,7 @@ const AppContextInner = ({ children }: { children: React.ReactNode }) => {
     localStorage.removeItem('user');
     setToken(null);
     setUser(null);
+    window.dispatchEvent(new CustomEvent('app:logout'));
     router.push('/log-in');
   };
 
@@ -58,8 +70,13 @@ const AppContextInner = ({ children }: { children: React.ReactNode }) => {
       people,
       setPeople,
       channels,
-      setChannels: () => {},
+      dmChannels,
+      groupChannels,
       channelsLoading,
+      loadChannels,
+      createChannel,
+      renameChannel,
+      searchChannels,
       activeChannelId,
       setActiveChannelId,
       token,

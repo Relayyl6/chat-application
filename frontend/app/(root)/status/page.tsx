@@ -1,13 +1,12 @@
 // import ChatCard from '@/components/ChatCard'
 import ChatCard from '@/components/ChatCard'
-import ChatContent from '@/components/List/MainChatPage'
 import { initialPeople } from '@/utils/names';
 // import { people } from '@/utils/names'
 import React from 'react'
 
 
 const page = () => {
-  const todayDate = Date.now().toISOString();
+  const todayDate = Date.now().toString();
   // const { people } 
   return (
     <div className='absolute left-15 min-h-screen w-full top-11 p-2 mx-auto'>
@@ -22,7 +21,6 @@ const page = () => {
           </div>
         ))
       } */}
-      <ChatContent />
     </div>
   )
 }

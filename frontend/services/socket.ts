@@ -10,7 +10,7 @@ export const connectSocket = (token: string) => {
     return socket;
   }
 
-  socket = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000', {
+  socket = io(process.env.NEXT_PUBLIC_API_URL || 'https://chat-app-backend-5rha.onrender.com', {
     auth: {
       token: token
     },

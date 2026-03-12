@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authMiddleware } from "../middleware/auth.middleware";
-import { LogIn, SignUp, getCurrentUser, changeStatus, updateProfile } from "../controller/auth.controller";
+import { LogIn, SignUp, getCurrentUser, changeStatus, updateProfile, searchUserByUsername } from "../controller/auth.controller";
 import { validate, registerSchema, loginSchema, updateProfileSchema } from "../middleware/validation.middleware";
 
 const authRouter = Router();
@@ -149,5 +149,7 @@ authRouter.put('/profile', authMiddleware, validate(updateProfileSchema), update
  *         description: Status updated
  */
 authRouter.put('/status', authMiddleware, changeStatus);
+
+authRouter.get('/search', authMiddleware, searchUserByUsername);
 
 export default authRouter;

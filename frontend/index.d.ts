@@ -88,7 +88,7 @@ declare type Member = {
 };
 
 declare interface AppContextType {
-  // --- DM state (unchanged) ---
+  // --- DM state ---
   messagesByChat: Record<string, MessageProps[]>;
   setMessagesByChat: React.Dispatch<React.SetStateAction<Record<string, MessageProps[]>>>;
   aiChatMessage: boolean;
@@ -96,12 +96,31 @@ declare interface AppContextType {
   people: PeopleState;
   setPeople: React.Dispatch<React.SetStateAction<PeopleState>>;
 
-  // --- Channel / socket state (new) ---
-  channels: Channel[];
-  setChannels: React.Dispatch<React.SetStateAction<Channel[]>>;
+  // --- Channel state ---
+  channels: Channel[];           // all channels
+  dmChannels: Channel[];         // type === 'direct'
+  groupChannels: Channel[];      // type !== 'direct'
   channelsLoading: boolean;
+  loadChannels: () => Promise<void>;
+  createChannel: (type: 'direct' | 'group', name: string, userIds: string[], description?: string, avatar?: string) => Promise<Channel>;
+  renameChannel: (channelId: string, name: string) => Promise<Channel>;
+  searchChannels: (query: string) => Promise<Channel[]>;
   activeChannelId: string | null;
   setActiveChannelId: React.Dispatch<React.SetStateAction<string | null>>;
+
+  // --- Auth state ---
+  token: string | null;
+  user: any | null;
+  login: (token: string, user: any) => void;
+  logout: () => void;
+}
+
+declare interface HamburgerProps {
+  isOpen: boolean;
+  size?: number;
+  color?: string;
+  className?: string;
+  animationDuration?: string;
 }
 
 declare type PeopleState = {

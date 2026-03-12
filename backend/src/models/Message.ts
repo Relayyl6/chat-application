@@ -43,12 +43,34 @@ const messageSchema = new Schema({
     type: String,
     name: String,
     size: Number
-  }]
+  }],
+  reactions: [{
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    emoji: {
+      type: String,
+      required: true
+    },
+    reactedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  isEdited: {
+    type: Boolean,
+    default: false
+  },
+  isDeleted: {
+    type: Boolean,
+    default: false
+  }
 }, {
   timestamps: true
 });
 
-// Compound index for efficient message queries
 messageSchema.index({ channelId: 1, autoId: -1 });
 messageSchema.index({ channelId: 1, createdAt: -1 });
 

@@ -20,18 +20,16 @@ export default function ForgotPassword({ open, handleClose }: ForgotPasswordProp
       slotProps={{
         paper: {
           component: 'form',
-          onSubmit: (event: React.FormEvent<HTMLFormElement>) => {
+          onSubmit: ((event: React.FormEvent<HTMLFormElement>) => {
             event.preventDefault();
             handleClose();
-          },
+          }) as unknown as React.FormEventHandler<HTMLDivElement>,
           sx: { backgroundImage: 'none' },
         },
       }}
     >
       <DialogTitle>Reset password</DialogTitle>
-      <DialogContent
-        sx={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%' }}
-      >
+      <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%' }}>
         <DialogContentText>
           Enter your account&apos;s email address, and we&apos;ll send you a link to
           reset your password.
@@ -50,9 +48,7 @@ export default function ForgotPassword({ open, handleClose }: ForgotPasswordProp
       </DialogContent>
       <DialogActions sx={{ pb: 3, px: 3 }}>
         <Button onClick={handleClose}>Cancel</Button>
-        <Button variant="contained" type="submit">
-          Continue
-        </Button>
+        <Button variant="contained" type="submit">Continue</Button>
       </DialogActions>
     </Dialog>
   );

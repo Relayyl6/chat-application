@@ -7,6 +7,7 @@ import { createAdapter } from "@socket.io/redis-adapter";
 
 export interface AuthSocket extends Socket {
     userId?: string
+    username?: string
 }
 
 // ✅ Export io so controllers can access it without going through app.get('io')

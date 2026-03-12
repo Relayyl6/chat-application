@@ -199,3 +199,24 @@ export const logoutUser = async (userId: string) => {
         throw new AppError("Error during logout", 500);
     }
 };
+
+/**
+ * Search for a user by exact username (case-insensitive).
+ * Excludes the requesting user from results.
+ */
+export const findUserByUsername = async (
+    username: string,
+    requestingUserId: string
+) => {
+    const user = await userModel
+        .findOne({ username: { $regex: `^${username.trim()}$`, $options: 'i' } })
+        .select('_id username avatar status');
+
+    if (!user) throw new AppError('User not found', 404);
+
+    if (user._id.toString() === requestingUserId) {
+        throw new AppError('User not found', 404);
+    }
+
+    return user;
+};

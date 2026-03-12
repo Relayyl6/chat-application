@@ -55,9 +55,17 @@ const ChatBubble = ({
   const [showActions, setShowActions] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const emojiRef = useRef<HTMLDivElement>(null);
 
-  // Close emoji picker when clicking outside
+  const emojiRef = useRef<HTMLDivElement>(null);
+  const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const touchMovedRef = useRef(false); // cancel long press if finger moves
+
+  // Sync editText when message prop updates (after socket confirms edit)
+  useEffect(() => {
+    if (!isEditing) setEditText(message || '');
+  }, [message, isEditing]);
+
+  // Close emoji picker on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (emojiRef.current && !emojiRef.current.contains(e.target as Node)) {
@@ -68,6 +76,29 @@ const ChatBubble = ({
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  const currentUserId =
+    typeof window !== 'undefined'
+      ? JSON.parse(localStorage.getItem('user') || '{}')._id
+      : '';
+
+  // ─── Long press handlers (mobile) ──────────────────────────────────────
+  const handleTouchStart = () => {
+    touchMovedRef.current = false;
+    longPressRef.current = setTimeout(() => {
+      if (!touchMovedRef.current) setShowActions(true);
+    }, 500);
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressRef.current) clearTimeout(longPressRef.current);
+  };
+
+  const handleTouchMove = () => {
+    touchMovedRef.current = true;
+    if (longPressRef.current) clearTimeout(longPressRef.current);
+  };
+
+  // ─── Actions ────────────────────────────────────────────────────────────
   const handleSaveEdit = async () => {
     if (!editText.trim() || !onEdit) return;
     setIsLoading(true);
@@ -96,6 +127,7 @@ const ChatBubble = ({
   const handleReact = async (emoji: string) => {
     if (!onReact) return;
     setShowEmojiPicker(false);
+    setShowActions(false);
     try {
       await onReact(emoji);
     } catch (e) {
@@ -103,24 +135,28 @@ const ChatBubble = ({
     }
   };
 
-  const currentUserId =
-    typeof window !== 'undefined'
-      ? JSON.parse(localStorage.getItem('user') || '{}').id
-      : '';
-
   return (
     <div
       className={`relative flex flex-col gap-1 p-2 w-fit min-w-[150px] max-w-sm rounded-lg ${className}`}
+      // Desktop: hover to show actions
       onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => {
-        setShowActions(false);
-        setShowEmojiPicker(false);
-      }}
+      onMouseLeave={() => { setShowActions(false); setShowEmojiPicker(false); }}
+      // Mobile: long press to show actions
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchMove={handleTouchMove}
     >
-      {/* Action toolbar — shown on hover */}
+      {/* Overlay to dismiss actions on mobile tap-outside */}
+      {showActions && (
+        <div
+          className='fixed inset-0 z-30 md:hidden'
+          onClick={() => { setShowActions(false); setShowEmojiPicker(false); }}
+        />
+      )}
+
+      {/* Action toolbar */}
       {showActions && !isEditing && (
         <div className={`absolute -top-9 ${isOwn ? 'right-0' : 'left-0'} flex gap-1 bg-gray-800 rounded-lg p-1 z-40 shadow-lg`}>
-          {/* React button — available to everyone */}
           <div className="relative" ref={emojiRef}>
             <button
               onClick={() => setShowEmojiPicker(p => !p)}
@@ -144,7 +180,6 @@ const ChatBubble = ({
             )}
           </div>
 
-          {/* Edit + Delete — only for own messages */}
           {isOwn && (
             <>
               <button
@@ -183,36 +218,39 @@ const ChatBubble = ({
             autoFocus
           />
           <div className="flex gap-1">
-            <button
-              onClick={handleSaveEdit}
-              disabled={isLoading}
-              className="bg-blue-600 text-white px-2 py-0.5 rounded text-xs hover:bg-blue-700 disabled:opacity-50"
-            >
+            <button onClick={handleSaveEdit} disabled={isLoading}
+              className="bg-blue-600 text-white px-2 py-0.5 rounded text-xs hover:bg-blue-700 disabled:opacity-50">
               {isLoading ? 'Saving...' : 'Save'}
             </button>
-            <button
-              onClick={() => { setEditText(message || ''); setIsEditing(false); }}
-              className="bg-gray-500 text-white px-2 py-0.5 rounded text-xs hover:bg-gray-600"
-            >
+            <button onClick={() => { setEditText(message || ''); setIsEditing(false); }}
+              className="bg-gray-500 text-white px-2 py-0.5 rounded text-xs hover:bg-gray-600">
               Cancel
             </button>
           </div>
         </div>
       ) : (
-        <p className="font-normal font-sans text-black mb-4 break-words">
-          {message || ''}
-        </p>
+        <p className="font-normal font-sans text-black mb-4 break-words">{message || ''}</p>
       )}
 
-      {/* Reaction pills */}
+      {/* Reaction pills — tapping opens emoji picker on mobile too */}
       {reactions.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-1">
           {reactions.map((reaction, idx) => {
-            const hasReacted = reaction.userIds.includes(currentUserId);
+            const hasReacted = Array.isArray(reaction.userIds) && reaction.userIds.includes(currentUserId);
             return (
               <button
                 key={idx}
-                onClick={() => handleReact(reaction.emoji)}
+                onClick={() => {
+                  // On mobile tap: open emoji picker to change/add reaction
+                  setShowActions(true);
+                  setShowEmojiPicker(true);
+                }}
+                onMouseUp={(e) => {
+                  // On desktop: clicking pill re-sends same emoji (toggle) 
+                  // only if it wasn't a long-press trigger
+                  e.stopPropagation();
+                  handleReact(reaction.emoji);
+                }}
                 className={`rounded-full px-2 py-0.5 text-xs border transition-colors
                   ${hasReacted
                     ? 'bg-blue-200 border-blue-400 text-blue-800'
@@ -226,7 +264,6 @@ const ChatBubble = ({
         </div>
       )}
 
-      {/* Timestamp */}
       <p className="absolute bottom-1 right-2 text-gray-700 font-mono text-[10px] opacity-70">
         {formatTime(timestamp)}
       </p>

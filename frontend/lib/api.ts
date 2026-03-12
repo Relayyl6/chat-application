@@ -16,7 +16,6 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     });
-
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || data.message || 'Login failed');
     return data.data;
@@ -28,7 +27,6 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, email, password })
     });
-
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || data.message || 'Registration failed');
     return data.data;
@@ -38,7 +36,6 @@ export const api = {
     const response = await fetch(`${API_URL}/api/auth/current`, {
       headers: getAuthHeaders()
     });
-
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to fetch current user');
     return data.data;
@@ -50,7 +47,6 @@ export const api = {
       headers: getAuthHeaders(),
       body: JSON.stringify({ username, avatar })
     });
-
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to update profile');
     return data.data;
@@ -62,10 +58,23 @@ export const api = {
       headers: getAuthHeaders(),
       body: JSON.stringify({ status })
     });
-
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to change status');
     return data.data;
+  },
+
+  // ===== USERS =====
+  async findUserByUsername(username: string) {
+    const response = await fetch(
+      `${API_URL}/api/auth/search?username=${encodeURIComponent(username)}`,
+      { headers: getAuthHeaders() }
+    );
+    // 404 just means no user found — not a hard error
+    if (response.status === 404) return null;
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Failed to search user');
+    // Backend returns { data: { user } } or { data: user }
+    return data.data?.user ?? data.data ?? null;
   },
 
   // ===== CHANNELS =====
@@ -73,7 +82,6 @@ export const api = {
     const response = await fetch(`${API_URL}/api/channels`, {
       headers: getAuthHeaders()
     });
-
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to fetch channels');
     return data.data;
@@ -85,7 +93,6 @@ export const api = {
       headers: getAuthHeaders(),
       body: JSON.stringify({ type, name, userIds, description, avatar })
     });
-
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to create channel');
     return data.data;
@@ -95,7 +102,6 @@ export const api = {
     const response = await fetch(`${API_URL}/api/channels/${channelId}`, {
       headers: getAuthHeaders()
     });
-
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to fetch channel');
     return data.data;
@@ -107,7 +113,6 @@ export const api = {
       headers: getAuthHeaders(),
       body: JSON.stringify({ name })
     });
-
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to rename channel');
     return data.data;
@@ -117,7 +122,6 @@ export const api = {
     const response = await fetch(`${API_URL}/api/channels/search?q=${encodeURIComponent(query)}`, {
       headers: getAuthHeaders()
     });
-
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to search channels');
     return data.data;
@@ -130,7 +134,6 @@ export const api = {
       headers: getAuthHeaders(),
       body: JSON.stringify({ userIds })
     });
-
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to add members');
     return data.data;
@@ -141,7 +144,6 @@ export const api = {
       method: 'POST',
       headers: getAuthHeaders()
     });
-
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to remove member');
     return data.data;
@@ -152,7 +154,6 @@ export const api = {
       method: 'POST',
       headers: getAuthHeaders()
     });
-
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to leave channel');
     return data.data;
@@ -162,7 +163,6 @@ export const api = {
     const response = await fetch(`${API_URL}/api/channels/${channelId}/members`, {
       headers: getAuthHeaders()
     });
-
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to fetch members');
     return data.data;
@@ -174,7 +174,6 @@ export const api = {
       headers: getAuthHeaders(),
       body: JSON.stringify({ memberId, role })
     });
-
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to update member role');
     return data.data;
@@ -185,19 +184,17 @@ export const api = {
     const response = await fetch(`${API_URL}/api/messages/${channelId}?page=${page}&limit=${limit}`, {
       headers: getAuthHeaders()
     });
-
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to fetch messages');
     return data.data;
   },
 
-  async sendMessage(channelId: string, content: string, attachments?: any[], replyTo?: string) {
+  async sendMessage(channelId: string, content: string, attachments?: any[], replyTo?: string, tempId?: number) {
     const response = await fetch(`${API_URL}/api/messages/${channelId}/send`, {
       method: 'POST',
       headers: getAuthHeaders(),
-      body: JSON.stringify({ content, attachments, replyTo })
+      body: JSON.stringify({ content, attachments, replyTo, tempId })
     });
-
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to send message');
     return data.data;
@@ -208,7 +205,6 @@ export const api = {
       method: 'POST',
       headers: getAuthHeaders()
     });
-
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to mark messages as read');
     return data.data;
@@ -220,7 +216,6 @@ export const api = {
       headers: getAuthHeaders(),
       body: JSON.stringify({ content })
     });
-
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to edit message');
     return data.data;
@@ -231,7 +226,6 @@ export const api = {
       method: 'DELETE',
       headers: getAuthHeaders()
     });
-
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to delete message');
     return data.data;
@@ -243,7 +237,6 @@ export const api = {
       headers: getAuthHeaders(),
       body: JSON.stringify({ emoji })
     });
-
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to add reaction');
     return data.data;
@@ -253,9 +246,8 @@ export const api = {
     const response = await fetch(`${API_URL}/api/messages/${channelId}/search?q=${encodeURIComponent(query)}&page=${page}&limit=${limit}`, {
       headers: getAuthHeaders()
     });
-
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Failed to search messages');
     return data.data;
-  }
+  },
 };
